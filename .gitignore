@@ -1,0 +1,30 @@
+# Local credentials and service files
+.env
+.env.*
+!.env.example
+*-service-account*.json
+*serviceAccountKey*.json
+*.pem
+*.key
+
+# Build output and tool caches
+node_modules/
+dist/
+build/
+.firebase/
+.dart_tool/
+.flutter-plugins-dependencies
+coverage/
+test-results/
+playwright-report/
+__pycache__/
+*.pyc
+*.log
+.DS_Store
+Thumbs.db
+
+# Offline reading copies downloaded for local research
+guides/*.txt
+
+# Local screenshots and temporary review artifacts
+.local/
