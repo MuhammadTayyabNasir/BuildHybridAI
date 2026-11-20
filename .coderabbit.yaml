@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+reviews:
+  profile: chill
+  high_level_summary: true
+  poem: false
+  path_filters:
+    - "!guides/*.txt"
+    - "!.agents/skills/**"
+    - "!docs/examples/**"
+  auto_review:
+    enabled: true
+    drafts: false
+  path_instructions:
+    - path: "**/*"
+      instructions: |
+        This hackathon project is currently in idea refinement.
+        Distinguish proposed behavior from implemented and tested behavior.
+        For application changes, prioritize correct Firebase AI Logic routing,
+        sensitive data in outbound requests or logs, validation of AI actions,
+        explicit user confirmation for simulated financial actions,
+        accessible navigation, and recovery when models or networking are unavailable.
+chat:
+  auto_reply: true
