@@ -14,9 +14,9 @@ IESCO's consumer manual defines the reference number as an identifier assigned t
 
 | Situation | Behavior to demonstrate |
 |---|---|
-| Help with a private question | On a supported desktop, Firebase AI Logic runs a single-turn English question through Nano in device-only mode. The model interprets the question in the context of the current field and selects a permitted hint. Device code checks the hint against the active form and resolves its target locally. For offline Urdu, render a speaker-reviewed translation of that hint and offer a bundled recording. |
+| Help with a private question | The Flutter client should select a permitted hint from the current field and error, check the target locally, and show a speaker-reviewed Urdu translation with optional bundled audio. Test any proposed on-device model path on the actual target device before labeling this as local AI. |
 | A clearer explanation in Urdu | The user asks for more detail. A cloud Gemini text call receives a fixed topic, screen, error and language, such as `payment_reference_help / bill_payment / meter_number_entered / ur`. Use a reviewed public glossary. Show the actual request fields in the demo. The payload builder accepts only enumerated values. |
-| A judge's browser lacks Nano | Offer predefined help topics. A public topic can use Firebase's prefer-on-device routing and fall back to cloud. Private free text remains local. When both routes are unavailable, provide a reviewed static hint and label its source. |
+| A demo device lacks a supported local model | Offer predefined help topics and a reviewed static hint. Label the source of the hint. A public topic may use a cloud model only through an allowlisted payload and with a visible network status. |
 
 The app compares identifiers, checks the mock bill, and controls the review button deterministically. The model can explain or highlight. The bill image, form values, arbitrary user text and audio have no path into cloud requests or telemetry. Voice in the first release means replayable spoken instructions with captions. Open-microphone conversation, additional languages, WebRTC, human-agent sessions and real banking connections can wait.
 
@@ -25,19 +25,19 @@ The app compares identifiers, checks the mock bill, and controls the review butt
 | Time | What the judge sees |
 |---|---|
 | 0:00–0:25 | The payer chooses the wrong number. Show both labels on the synthetic bill and the form's error. |
-| 0:25–1:10 | With the app loaded, Nano downloaded and networking disabled, try two differently worded private questions. Show the working highlight and play the Urdu cue. |
+| 0:25–1:10 | With networking disabled, show the permitted local hint, the matching highlight, and the reviewed Urdu cue. If a verified on-device model is available on the chosen Flutter target, show its behavior separately. |
 | 1:10–1:50 | Reconnect and ask for the distinction in simpler Urdu. Show the actual cloud request beside its answer with English subtitles. |
-| 1:50–2:25 | The user edits the field, reaches review and confirms the simulation. Show what support looks like on a browser without the local model. |
+| 1:50–2:25 | The user edits the field, reaches review and confirms the simulation. Show the static fallback on a device without the local model. |
 | 2:25–2:50 | Report observed usability results and show the hosted demo link. |
 
 ### Evidence before extending scope
 
-- First technical check: complete a device-only Firebase call after model download, then a cloud call built from an allowed topic with App Check enabled. Verify actual network traffic and routing, including model-unavailable and offline cases. Label a static hint as static.
+- First technical check: confirm Firebase AI Logic's Flutter support for the intended device targets, then complete a verified local inference call if supported and a cloud call built from an allowed topic with App Check enabled. Verify network traffic and routing, including model-unavailable and offline cases. Label a static hint as static. If Flutter cannot meet the hackathon's on-device inference requirement, choose a supported platform or local model route before building the demo around that claim.
 - Try the flow with three to five intended users, including an Urdu speaker. Give each two equivalent synthetic bills, alternating which version has coaching first. Count independent completions and wrong-field retries. Ask them to point to the right identifier on a fresh bill without the hint. Report raw counts and the small sample size.
 - Use ECC's `skills/accessibility` as a review reference for keyboard focus, accessible labels and announcing the current hint. Use `skills/eval-harness` for paraphrase, fallback and privacy regression cases. The attached archive has an MIT license. Preserve applicable notices and disclose any incorporated pre-existing work in the submission.
 
 ### Build inputs
 
-Start with desktop Chrome, a synthetic bill with fictional labels and numbers, a public glossary for the demo provider, Firebase's JavaScript SDK, a Firebase project with AI Logic and App Check, and hosting for the judge link. Use local fixtures for the banking screens. Recruit a fluent Urdu speaker to review or record cues. Prepare a public GitHub or GitLab repository and a public YouTube upload for submission. The platform recommendation is conditional on a successful Nano run on the actual demo machine.
+Start with the [Flutter screen design](design/BRIEF.md), a synthetic bill with fictional labels and numbers, a public glossary for the demo provider, a Firebase project with AI Logic and App Check, and a judge-accessible demo. Use local fixtures for the banking screens. Recruit a fluent Urdu speaker to review or record cues. Prepare a public GitHub or GitLab repository and a public YouTube upload for submission. The platform and local inference claims remain conditional on a successful technical proof on the actual demo device.
 
 [Official contest and technical references](guides/README.md)

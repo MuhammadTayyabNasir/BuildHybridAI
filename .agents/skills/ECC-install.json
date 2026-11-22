@@ -1,0 +1,20 @@
+{
+  "source": "User-provided ECC-main.zip",
+  "upstream": "https://github.com/affaan-m/ECC",
+  "archive_sha256": "e645365300f68ed49e07a49196e2e1a5aec4073f4015bb88d6a7a183b40dd656",
+  "skills": [
+    "product-lens",
+    "product-capability",
+    "dart-flutter-patterns",
+    "flutter-dart-code-review",
+    "accessibility",
+    "eval-harness",
+    "e2e-testing",
+    "i18n-sync",
+    "security-review",
+    "verification-loop",
+    "frontend-patterns",
+    "regex-vs-llm-structured-text"
+  ],
+  "license": "MIT"
+}
