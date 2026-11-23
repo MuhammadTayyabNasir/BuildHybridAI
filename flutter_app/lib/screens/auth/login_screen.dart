@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
+import '../../ui/pma_ui.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,13 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: Pma.heroGradient),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -82,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(24),
-            child: Image.asset('assets/images/factory.jpg', fit: BoxFit.cover),
+            child: Image.asset('assets/icon/icon.png', fit: BoxFit.cover),
           ),
         ),
         const SizedBox(height: 16),
@@ -102,7 +97,23 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 4),
         const Text(
           'Packing & Monitoring App',
-          style: TextStyle(color: Colors.white54, fontSize: 12),
+          style: TextStyle(color: Colors.white70, fontSize: 12),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Speak it. Check it. Save it.',
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 10),
+        const Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          alignment: WrapAlignment.center,
+          children: [
+            TrendPill(label: 'On-device AI', onDark: true),
+            TrendPill(label: 'اردو · English', onDark: true),
+            TrendPill(label: 'Works offline', onDark: true),
+          ],
         ),
       ],
     );
