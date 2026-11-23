@@ -13,6 +13,7 @@ import '../../providers/connectivity_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../services/local_storage_service.dart';
 import '../../services/th_threshold_service.dart';
+import '../../ui/pma_ui.dart';
 import '../analytics/advanced_analytics_screen.dart';
 import '../sections/section_home_screen.dart';
 import '../sections/temp_humidity/temp_humidity_screen.dart';
@@ -188,8 +189,14 @@ class _AssistantScreenState extends State<AssistantScreen> {
     final online = context.watch<ConnectivityProvider>().isOnline;
     final pending = _service.pending;
     return Scaffold(
+      backgroundColor: Pma.canvas,
       appBar: AppBar(
         title: const Text('PMA Assistant'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(gradient: Pma.heroGradient),
+        ),
         actions: [
           _LangSwitch(
             urdu: _urdu,
@@ -367,7 +374,7 @@ class _UserBubble extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 10, left: 48),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: AppColors.primary,
+            gradient: Pma.heroGradient,
             borderRadius: BorderRadius.circular(18),
           ),
           child: Text(text, style: const TextStyle(color: Colors.white)),
@@ -396,7 +403,7 @@ class _BotBubble extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: dark ? AppColors.cardDark : Colors.white,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(Pma.radius),
           border: reply.pending != null
               ? Border.all(color: AppColors.primary, width: 1.5)
               : null,
@@ -521,7 +528,8 @@ class _InputBar extends StatelessWidget {
               FloatingActionButton(
                 heroTag: 'pma-mic',
                 onPressed: busy ? null : onMic,
-                backgroundColor: listening ? AppColors.red : AppColors.primary,
+                backgroundColor: listening ? AppColors.red : Pma.ink,
+                shape: const CircleBorder(),
                 child: Icon(listening ? Icons.stop : Icons.mic, color: Colors.white),
               ),
             ],
