@@ -8,6 +8,15 @@ class TempHumidityRow {
   final String verifiedByQc;
   final String remarks;
 
+  // Audit trail for readings made through the PMA assistant.
+  /// Who said / typed the reading.
+  final String enteredBy;
+  /// 'manual' | 'voice:on-device' | 'voice:cloud' | 'voice:rules' | 'text:…'
+  final String source;
+  /// Who confirmed the read-back ('' when saved without confirmation).
+  final String confirmedBy;
+  final DateTime? enteredAt;
+
   const TempHumidityRow({
     required this.time,
     this.temperature,
@@ -15,6 +24,10 @@ class TempHumidityRow {
     required this.section,
     this.verifiedByQc = '',
     this.remarks = '',
+    this.enteredBy = '',
+    this.source = '',
+    this.confirmedBy = '',
+    this.enteredAt,
   });
 
   Map<String, dynamic> toMap() => {
@@ -24,6 +37,10 @@ class TempHumidityRow {
         'section': section,
         'verifiedByQc': verifiedByQc,
         'remarks': remarks,
+        if (enteredBy.isNotEmpty) 'enteredBy': enteredBy,
+        if (source.isNotEmpty) 'source': source,
+        if (confirmedBy.isNotEmpty) 'confirmedBy': confirmedBy,
+        if (enteredAt != null) 'enteredAt': enteredAt!.millisecondsSinceEpoch,
       };
 
   factory TempHumidityRow.fromMap(Map<String, dynamic> m) => TempHumidityRow(
@@ -33,6 +50,12 @@ class TempHumidityRow {
         section: m['section'] as String? ?? '',
         verifiedByQc: m['verifiedByQc'] as String? ?? '',
         remarks: m['remarks'] as String? ?? '',
+        enteredBy: m['enteredBy'] as String? ?? '',
+        source: m['source'] as String? ?? '',
+        confirmedBy: m['confirmedBy'] as String? ?? '',
+        enteredAt: m['enteredAt'] is int
+            ? DateTime.fromMillisecondsSinceEpoch(m['enteredAt'] as int)
+            : null,
       );
 
   TempHumidityRow copyWith({
@@ -42,6 +65,7 @@ class TempHumidityRow {
     String? section,
     String? verifiedByQc,
     String? remarks,
+    String? confirmedBy,
   }) =>
       TempHumidityRow(
         time: time ?? this.time,
@@ -50,6 +74,10 @@ class TempHumidityRow {
         section: section ?? this.section,
         verifiedByQc: verifiedByQc ?? this.verifiedByQc,
         remarks: remarks ?? this.remarks,
+        enteredBy: enteredBy,
+        source: source,
+        confirmedBy: confirmedBy ?? this.confirmedBy,
+        enteredAt: enteredAt,
       );
 }
 
