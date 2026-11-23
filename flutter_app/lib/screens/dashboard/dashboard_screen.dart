@@ -18,6 +18,7 @@ import '../admin/product_management_screen.dart';
 import '../admin/machine_management_screen.dart';
 import '../admin/bulk_import_screen.dart';
 import '../../services/report_service.dart';
+import '../assistant/assistant_screen.dart';
 import '../settings/settings_screen.dart';
 import '../../widgets/sync_status_badge.dart';
 import '../../widgets/download_report_dialog.dart';
@@ -180,6 +181,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       appBar: _buildAppBar(context, auth, conn),
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'pma-assistant',
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AssistantScreen()),
+        ),
+        icon: const Icon(Icons.mic),
+        label: const Text('Ask PMA'),
+      ),
       body: Column(
         children: [
           const OfflineBanner(),
