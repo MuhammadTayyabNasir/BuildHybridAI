@@ -11,7 +11,11 @@ import 'ui/bill_saathi_app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(BillSaathiApp(coach: await _configureCoach()));
+  final coach = await _configureCoach().timeout(
+    const Duration(seconds: 15),
+    onTimeout: () => const CoachService(),
+  );
+  runApp(BillSaathiApp(coach: coach));
 }
 
 Future<CoachService> _configureCoach() async {
@@ -60,8 +64,8 @@ Future<CoachService> _configureCoach() async {
         return response.text;
       },
     );
-  } catch (error) {
-    debugPrint('Firebase AI is unavailable: $error');
+  } catch (_) {
+    debugPrint('Firebase AI is unavailable; using the built-in guide.');
     return const CoachService();
   }
 }

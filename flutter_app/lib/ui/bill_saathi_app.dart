@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
 
 import '../core/coach_service.dart';
 import '../core/reference_validator.dart';
@@ -6,9 +8,16 @@ import '../core/sample_bill.dart';
 import 'saathi_theme.dart';
 import 'saathi_widgets.dart';
 
-class BillSaathiApp extends StatelessWidget {
+class BillSaathiApp extends StatefulWidget {
   const BillSaathiApp({super.key, required this.coach});
   final CoachService coach;
+
+  @override
+  State<BillSaathiApp> createState() => _BillSaathiAppState();
+}
+
+class _BillSaathiAppState extends State<BillSaathiApp> {
+  AppLanguage _language = AppLanguage.english;
 
   @override
   Widget build(BuildContext context) => MaterialApp(
@@ -16,15 +25,32 @@ class BillSaathiApp extends StatelessWidget {
     debugShowCheckedModeBanner: false,
     theme: saathiTheme(Brightness.light),
     darkTheme: saathiTheme(Brightness.dark),
-    home: _PracticeFlow(coach: coach),
+    locale: Locale(_language == AppLanguage.urdu ? 'ur' : 'en'),
+    localizationsDelegates: const [
+      GlobalMaterialLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+    ],
+    supportedLocales: const [Locale('en'), Locale('ur')],
+    home: _PracticeFlow(
+      coach: widget.coach,
+      language: _language,
+      onLanguageChanged: (language) => setState(() => _language = language),
+    ),
   );
 }
 
 enum _Page { home, addBill, reference, assistant, review, complete }
 
 class _PracticeFlow extends StatefulWidget {
-  const _PracticeFlow({required this.coach});
+  const _PracticeFlow({
+    required this.coach,
+    required this.language,
+    required this.onLanguageChanged,
+  });
   final CoachService coach;
+  final AppLanguage language;
+  final ValueChanged<AppLanguage> onLanguageChanged;
   @override
   State<_PracticeFlow> createState() => _PracticeFlowState();
 }
@@ -33,15 +59,20 @@ class _PracticeFlowState extends State<_PracticeFlow> {
   final _controller = TextEditingController();
   final _validator = const ReferenceValidator();
   _Page _page = _Page.home;
-  AppLanguage _language = AppLanguage.english;
   ReferenceIssue? _issue;
   HelpReply? _reply;
   HelpTopic _topic = HelpTopic.findReference;
   bool _loading = false;
   int _helpRequestId = 0;
 
-  bool get _urdu => _language == AppLanguage.urdu;
+  bool get _urdu => widget.language == AppLanguage.urdu;
   String _t(String en, String ur) => _urdu ? ur : en;
+  String get _amount => intl.NumberFormat.currency(
+    locale: _urdu ? 'ur_PK' : 'en_PK',
+    name: 'PKR',
+    symbol: _urdu ? 'روپے ' : 'PKR ',
+    decimalDigits: 0,
+  ).format(SampleBill.amount);
 
   @override
   void dispose() {
@@ -78,14 +109,14 @@ class _PracticeFlowState extends State<_PracticeFlow> {
     _topic = _issue == ReferenceIssue.meterNumber
         ? HelpTopic.meterIsDifferent
         : HelpTopic.findReference;
-    _reply = widget.coach.reviewedHint(_topic, _language);
+    _reply = widget.coach.reviewedHint(_topic, widget.language);
     _page = _Page.assistant;
   });
 
   Future<void> _askAi() async {
     final requestId = ++_helpRequestId;
     final topic = _topic;
-    final language = _language;
+    final language = widget.language;
     setState(() => _loading = true);
     final reply = await widget.coach.explain(topic, language);
     if (!mounted || requestId != _helpRequestId || _page != _Page.assistant) {
@@ -100,7 +131,7 @@ class _PracticeFlowState extends State<_PracticeFlow> {
   Future<void> _askOnDevice() async {
     final requestId = ++_helpRequestId;
     final topic = _topic;
-    final language = _language;
+    final language = widget.language;
     setState(() => _loading = true);
     final reply = await widget.coach.explainOnDevice(topic, language);
     if (!mounted || requestId != _helpRequestId || _page != _Page.assistant) {
@@ -142,15 +173,17 @@ class _PracticeFlowState extends State<_PracticeFlow> {
         _Page.review => _review(),
         _Page.complete => _complete(),
       },
-      language: _language,
-      onLanguageChanged: (language) => setState(() {
-        _helpRequestId++;
-        _loading = false;
-        _language = language;
-        if (_page == _Page.assistant) {
-          _reply = widget.coach.reviewedHint(_topic, language);
-        }
-      }),
+      language: widget.language,
+      onLanguageChanged: (language) {
+        setState(() {
+          _helpRequestId++;
+          _loading = false;
+          if (_page == _Page.assistant) {
+            _reply = widget.coach.reviewedHint(_topic, language);
+          }
+        });
+        widget.onLanguageChanged(language);
+      },
       step: switch (_page) {
         _Page.addBill => 1,
         _Page.reference || _Page.assistant => 2,
@@ -302,7 +335,7 @@ class _PracticeFlowState extends State<_PracticeFlow> {
   };
 
   Widget _assistant() {
-    final reply = _reply ?? widget.coach.reviewedHint(_topic, _language);
+    final reply = _reply ?? widget.coach.reviewedHint(_topic, widget.language);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -408,15 +441,15 @@ class _PracticeFlowState extends State<_PracticeFlow> {
               label: _t('Provider', 'ادارہ'),
               value: SampleBill.provider,
             ),
-            const DetailRow(
-              label: 'Reference',
+            DetailRow(
+              label: _t('Reference', 'حوالہ نمبر'),
               value: SampleBill.reference,
               ltrValue: true,
             ),
-            const DetailRow(
-              label: 'Amount',
-              value: 'PKR 4,280',
-              ltrValue: true,
+            DetailRow(
+              label: _t('Amount', 'رقم'),
+              value: _amount,
+              ltrValue: !_urdu,
             ),
           ],
         ),
@@ -469,10 +502,10 @@ class _PracticeFlowState extends State<_PracticeFlow> {
               label: _t('Provider', 'ادارہ'),
               value: SampleBill.provider,
             ),
-            const DetailRow(
-              label: 'Amount',
-              value: 'PKR 4,280',
-              ltrValue: true,
+            DetailRow(
+              label: _t('Amount', 'رقم'),
+              value: _amount,
+              ltrValue: !_urdu,
             ),
           ],
         ),

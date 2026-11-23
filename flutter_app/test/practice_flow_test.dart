@@ -58,6 +58,33 @@ void main() {
     expect(reply.source, HelpSource.reviewedGuide);
   });
 
+  test('formatted and Urdu-script identifiers are rejected', () async {
+    for (final text in [
+      'Use account 1234 5678 9012 34.',
+      'Use account ۱۲۳۴-۵۶۷۸-۹۰۱۲-۳۴.',
+      'Use account ١٢٣٤/٥٦٧٨/٩٠١٢/٣٤.',
+    ]) {
+      final coach = CoachService(cloudTextGenerator: (_) async => text);
+      expect(
+        (await coach.explain(
+          HelpTopic.findReference,
+          AppLanguage.english,
+        )).source,
+        HelpSource.reviewedGuide,
+      );
+    }
+    final benign = CoachService(
+      cloudTextGenerator: (_) async => 'Copy those 14 digits.',
+    );
+    expect(
+      (await benign.explain(
+        HelpTopic.findReference,
+        AppLanguage.english,
+      )).source,
+      HelpSource.cloudAi,
+    );
+  });
+
   test('stalled AI generators return the built-in guide', () async {
     final stalled = Completer<String?>();
     final coach = CoachService(
@@ -170,6 +197,12 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('اردو'));
     await tester.pumpAndSettle();
+    expect(
+      Localizations.localeOf(
+        tester.element(find.byType(Scaffold).first),
+      ).languageCode,
+      'ur',
+    );
     pending.complete('Stale English answer.');
     await tester.pump();
     expect(find.text('Stale English answer.'), findsNothing);
@@ -186,5 +219,27 @@ void main() {
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.text('Start practice'), findsOneWidget);
+  });
+
+  testWidgets('Urdu review uses translated labels and local currency format', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const BillSaathiApp(coach: CoachService()));
+    await tester.tap(find.text('EN'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('اردو'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('مشق شروع کریں'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('یہ نمونہ بل استعمال کریں'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), SampleBill.reference);
+    await tester.ensureVisible(find.text('تفصیلات دیکھیں'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('تفصیلات دیکھیں'));
+    await tester.pumpAndSettle();
+    expect(find.text('حوالہ نمبر'), findsOneWidget);
+    expect(find.text('رقم'), findsOneWidget);
+    expect(find.textContaining('روپے'), findsOneWidget);
   });
 }

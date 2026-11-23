@@ -67,7 +67,7 @@ class CoachService {
       if (reply == null ||
           reply.isEmpty ||
           reply.length > 360 ||
-          RegExp(r'\d{6,}').hasMatch(reply)) {
+          _containsLongDigitSequence(reply)) {
         return reviewedHint(topic, language);
       }
       return HelpReply(reply, HelpSource.cloudAi);
@@ -91,7 +91,7 @@ class CoachService {
       if (reply == null ||
           reply.isEmpty ||
           reply.length > 360 ||
-          RegExp(r'\d{6,}').hasMatch(reply)) {
+          _containsLongDigitSequence(reply)) {
         return reviewedHint(topic, language);
       }
       return HelpReply(reply, HelpSource.onDeviceAi);
@@ -99,4 +99,31 @@ class CoachService {
       return reviewedHint(topic, language);
     }
   }
+}
+
+bool _containsLongDigitSequence(String text) {
+  var digits = 0;
+  for (final rune in text.runes) {
+    final isDigit =
+        (rune >= 0x30 && rune <= 0x39) ||
+        (rune >= 0x660 && rune <= 0x669) ||
+        (rune >= 0x6f0 && rune <= 0x6f9);
+    if (isDigit) {
+      if (++digits >= 6) return true;
+    } else if (digits > 0 &&
+        (rune == 0x20 ||
+            rune == 0xa0 ||
+            rune == 0x09 ||
+            rune == 0x2d ||
+            rune == 0x2013 ||
+            rune == 0x2014 ||
+            rune == 0x2f ||
+            rune == 0x2c ||
+            rune == 0x2e)) {
+      // Group separators do not make a long identifier safe to display.
+    } else {
+      digits = 0;
+    }
+  }
+  return false;
 }
