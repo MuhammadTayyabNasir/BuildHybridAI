@@ -30,11 +30,17 @@ class MainActivity : FlutterActivity()
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "bill_saathi/on_device")
             .setMethodCallHandler { call, result ->
-                if (call.method != "explain") {
+                if (call.method != "explain" && call.method != "walletIntent" && call.method != "activitySummary") {
                     result.notImplemented()
                     return@setMethodCallHandler
                 }
-                val prompt = when (call.argument<String>("topic")) {
+                val prompt = if (call.method == "activitySummary") {
+                    val facts = call.argument<String>("facts").orEmpty().take(500)
+                    "Explain the following fictional account activity in one simple English sentence. Use only the supplied facts. Do not give advice. $facts"
+                } else if (call.method == "walletIntent") {
+                    val request = call.argument<String>("request").orEmpty().take(1200)
+                    "Classify this English or Urdu wallet request as donations, challans, account, transfer, card, history or unknown. Return only the label. Request: $request"
+                } else when (call.argument<String>("topic")) {
                     "findReference" -> "For a fictional electricity bill practice, explain in one short English sentence where to find the Payment Reference. Do not invent numbers or ask for personal information."
                     "meterIsDifferent" -> "For a fictional electricity bill practice, explain in one short English sentence why a meter number is different from a Payment Reference. Do not invent numbers or ask for personal information."
                     else -> {

@@ -1,24 +1,36 @@
 import 'dart:convert';
+import 'voice_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
+import 'bank_card.dart';
 
 enum Service {
   donations(
     'Donations',
     Icons.favorite_outline,
     'Edhi Foundation',
-    'Choose a cause and amount on Edhi’s donation page.',
+    'Choose an amount for a simulated donation.',
     'https://www.edhi.org/shop/donation-72',
   ),
   challans(
     'Punjab traffic challans',
     Icons.directions_car_outlined,
     'ePay Punjab',
-    'Choose Punjab Police, then Traffic Challan. Have your challan slip ready.',
+    'Demo challan · Punjab Traffic Police',
     'https://epay.punjab.gov.pk/',
   ),
+  account('My account', Icons.account_balance_wallet_outlined, '', '', ''),
+  transfer(
+    'Send money',
+    Icons.north_east,
+    'Ayesha Khan',
+    'Send from your demo current account to your saved contact.',
+    '',
+  ),
+  card('My card', Icons.credit_card, '', '', ''),
   history('Payment history', Icons.receipt_long_outlined, '', '', '');
 
   const Service(this.title, this.icon, this.provider, this.help, this.url);
@@ -29,23 +41,34 @@ enum Service {
 Service? resolveRequest(String query) {
   final q = query.toLowerCase();
   if (RegExp(
-    r'last|recent|previous|history|receipt|when did|how much did',
+    r'last|recent|previous|history|receipt|when did|how much did|پچھل|آخری|رسید|ہسٹری|تاریخچہ|ادائیگیوں|pich[hl]|akhri|raseed',
   ).hasMatch(q)) {
     return Service.history;
   }
-  if (RegExp(r'donat|charit|zakat|edhi|give money').hasMatch(q)) {
+  if (RegExp(
+    r'donat|charit|zakat|edhi|give money|عطیہ|عطیات|عطیہ|چندہ|صدقہ|زکو|زکا|ایدھی|خیرات|ڈونیٹ|chanda|sadqa|atiya',
+  ).hasMatch(q)) {
     return Service.donations;
   }
-  if (RegExp(r'chall?an|traffic|driving fine|ticket').hasMatch(q)) {
+  if (RegExp(
+    r'chall?an|traffic|driving fine|ticket|چالان|ٹریفک|جرمانہ|jurmana',
+  ).hasMatch(q)) {
     return Service.challans;
   }
+  if (RegExp(r'balance|account|بیلنس|اکاؤنٹ|کھاتہ|رقم کتنی').hasMatch(q)) {
+    return Service.account;
+  }
+  if (RegExp(r'transfer|send money|bhej|بھیج|ٹرانسفر').hasMatch(q)) {
+    return Service.transfer;
+  }
+  if (RegExp(r'card|freeze|کارڈ').hasMatch(q)) return Service.card;
   return null;
 }
 
 class Wallet extends StatefulWidget {
-  const Wallet({super.key, required this.practice, this.interpret});
+  const Wallet({super.key, required this.practice, this.publicGuide});
   final WidgetBuilder practice;
-  final Future<Service?> Function(String)? interpret;
+  final Future<String?> Function(Service)? publicGuide;
   @override
   State<Wallet> createState() => _WalletState();
 }
@@ -55,6 +78,18 @@ class _WalletState extends State<Wallet> {
   String? reply;
   List<String> records = [];
   bool ready = false;
+  bool frozen = false;
+  bool saving = false;
+  int get balance => records
+      .map((r) => jsonDecode(r) as List)
+      .where((r) => r.length > 3 && r[3] == 'debit')
+      .fold<int>(
+        5000000,
+        (sum, r) => sum - (double.parse(r[1].toString()) * 100).round(),
+      );
+  String get balanceText => 'Rs ${(balance / 100).toStringAsFixed(2)}';
+  bool get supportsLocalModel =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
   bool resolving = false;
   String? unknown;
   late final storage = SharedPreferencesAsync();
@@ -67,8 +102,10 @@ class _WalletState extends State<Wallet> {
   Future<void> load() async {
     try {
       final saved = await storage.getStringList('wallet.receipts') ?? [];
+      final cardFrozen = await storage.getBool("wallet.frozen") ?? false;
       if (mounted) {
         setState(() {
+          frozen = cardFrozen;
           records = saved;
           ready = true;
         });
@@ -93,7 +130,7 @@ class _WalletState extends State<Wallet> {
       unknown = input.text.trim();
       setState(
         () => reply =
-            'I can open donations, find Punjab traffic challans, or show your saved payments. Which do you need?',
+            'Try balance, transfers, cards, donations, Punjab challans, or payment history.',
       );
       return;
     }
@@ -109,7 +146,12 @@ class _WalletState extends State<Wallet> {
     setState(() => resolving = true);
     Service? target;
     try {
-      target = await widget.interpret?.call(query);
+      final name = await const MethodChannel('bill_saathi/on_device')
+          .invokeMethod<String>('walletIntent', {'request': query})
+          .timeout(const Duration(seconds: 20));
+      target = Service.values
+          .where((s) => s.name == name?.trim().toLowerCase())
+          .firstOrNull;
     } catch (_) {}
     if (!mounted) return;
     setState(() => resolving = false);
@@ -120,10 +162,36 @@ class _WalletState extends State<Wallet> {
     setState(() {
       unknown = null;
       reply = target == null
-          ? 'Cloud help could not match this request. Choose a service below.'
+          ? 'On-device help could not match this request. Choose a service below.'
           : null;
     });
     if (target != null) open(target);
+  }
+
+  bool urdu = false;
+  String voiceRequest(String words, bool inUrdu, {BuildContext? page}) {
+    urdu = inUrdu;
+    final target = resolveRequest(words);
+    if (target == null) {
+      if (page != null) Navigator.pop(page);
+      input.text = words;
+      ask();
+      return inUrdu
+          ? 'درخواست سمجھ نہیں آئی۔ آپ لکھ کر بھی پوچھ سکتے ہیں۔'
+          : 'Please edit your request or choose a service.';
+    }
+    if (page != null) Navigator.pop(page);
+    open(target);
+    return inUrdu
+        ? switch (target) {
+            Service.account => 'اکاؤنٹ کھول دیا ہے۔',
+            Service.transfer => 'رقم بھیجنے کا صفحہ کھول دیا ہے۔',
+            Service.card => 'کارڈ کا صفحہ کھول دیا ہے۔',
+            Service.donations => 'عطیات کا صفحہ کھول دیا ہے۔',
+            Service.challans => 'پنجاب ٹریفک چالان کا صفحہ کھول دیا ہے۔',
+            Service.history => 'ادائیگیوں کی تفصیل کھول دی ہے۔',
+          }
+        : 'Opened ${target.title}.';
   }
 
   void open(Service service) {
@@ -131,13 +199,72 @@ class _WalletState extends State<Wallet> {
       MaterialPageRoute<void>(
         builder: (context) => Scaffold(
           appBar: AppBar(title: Text(service.title)),
+          bottomNavigationBar: SafeArea(
+            child: VoiceBar(
+              urdu: urdu,
+              onRequest: (words, language) =>
+                  voiceRequest(words, language, page: context),
+            ),
+          ),
           body: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 600),
               child: ListView(
                 padding: const EdgeInsets.all(24),
                 children: [
-                  if (service == Service.history) ...[
+                  if (service == Service.account ||
+                      service == Service.card) ...[
+                    BankCardFace(
+                      card: service == Service.card,
+                      amount: ready ? balanceText : '—',
+                      frozen: frozen,
+                    ),
+                    const SizedBox(height: 24),
+                    if (service == Service.account)
+                      ListTile(
+                        title: const Text('Account activity'),
+                        trailing: const Icon(Icons.arrow_forward),
+                        onTap: () {
+                          Navigator.pop(context);
+                          open(Service.history);
+                        },
+                      )
+                    else
+                      FilledButton.icon(
+                        icon: Icon(
+                          frozen ? Icons.lock_open : Icons.lock_outline,
+                        ),
+                        label: Text(
+                          frozen ? 'Unfreeze demo card' : 'Freeze demo card',
+                        ),
+                        onPressed: !ready
+                            ? null
+                            : () async {
+                                if (saving) return;
+                                saving = true;
+                                final value = !frozen;
+                                try {
+                                  await storage.setBool('wallet.frozen', value);
+                                  if (!mounted) return;
+                                  setState(() => frozen = value);
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                    open(Service.card);
+                                  }
+                                } catch (_) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Could not update card.'),
+                                      ),
+                                    );
+                                  }
+                                } finally {
+                                  saving = false;
+                                }
+                              },
+                      ),
+                  ] else if (service == Service.history) ...[
                     Text(
                       records.isEmpty
                           ? 'No receipts saved yet'
@@ -146,7 +273,13 @@ class _WalletState extends State<Wallet> {
                     ),
                     if (records.isEmpty)
                       const Text(
-                        'After paying with a provider, you can save the receipt details here.',
+                        'Your confirmed demo payments will appear here.',
+                      ),
+                    if (records.isNotEmpty)
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.insights),
+                        label: const Text('Explain my activity privately'),
+                        onPressed: () => explainActivity(context),
                       ),
                     ...records.map(receipt),
                   ] else ...[
@@ -157,34 +290,45 @@ class _WalletState extends State<Wallet> {
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     Text(service.help),
-                    const SizedBox(height: 24),
-                    FilledButton(
-                      onPressed: () async {
-                        try {
-                          if (await launchUrl(
-                            Uri.parse(service.url),
-                            mode: LaunchMode.externalApplication,
-                          )) {
-                            return;
-                          }
-                        } catch (_) {}
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: SelectableText(
-                                'Open ${service.url} in your browser.',
+                    if (widget.publicGuide != null)
+                      TextButton.icon(
+                        icon: const Icon(Icons.auto_awesome),
+                        label: const Text('Explain this service online'),
+                        onPressed: () async {
+                          final guide = await widget.publicGuide!(service);
+                          if (context.mounted) {
+                            showDialog<void>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: Text(service.title),
+                                content: Text(guide ?? service.help),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text('Done'),
+                                  ),
+                                ],
                               ),
-                            ),
-                          );
-                        }
-                      },
-                      child: Text('Open ${service.provider}'),
+                            );
+                          }
+                        },
+                      ),
+                    const SizedBox(height: 24),
+                    BankCardFace(
+                      card: false,
+                      amount: ready ? balanceText : '—',
+                      frozen: frozen,
                     ),
-                    OutlinedButton(
+                    const SizedBox(height: 20),
+                    FilledButton(
                       onPressed: ready
                           ? () => saveReceipt(context, service)
                           : null,
-                      child: const Text('Save a completed payment'),
+                      child: Text(
+                        service == Service.transfer
+                            ? 'Send to Ayesha'
+                            : 'Make demo payment',
+                      ),
                     ),
                   ],
                 ],
@@ -196,12 +340,54 @@ class _WalletState extends State<Wallet> {
     );
   }
 
+  Future<void> explainActivity(BuildContext page) async {
+    final debits = records
+        .map((entry) => jsonDecode(entry) as List)
+        .where((r) => r.length > 3 && r[3] == 'debit')
+        .toList();
+    final total = ((5000000 - balance) / 100).toStringAsFixed(2);
+    final facts =
+        'Demo payments: ${debits.length}. Total spent: Rs $total. Remaining balance: $balanceText.';
+    final explanation = () async {
+      if (!supportsLocalModel) return facts;
+      try {
+        final text = await const MethodChannel('bill_saathi/on_device')
+            .invokeMethod<String>('activitySummary', {'facts': facts})
+            .timeout(const Duration(seconds: 20));
+        if (text != null && text.trim().isNotEmpty) {
+          return '$facts\n\nOn-device explanation\n$text';
+        }
+      } catch (_) {}
+      return facts;
+    }();
+    await showDialog<void>(
+      context: page,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Private activity summary'),
+        content: FutureBuilder<String>(
+          future: explanation,
+          builder: (_, snapshot) => Text(
+            snapshot.data ?? '$facts\n\nPreparing your on-device explanation…',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Done'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget receipt(String entry) {
     final row = jsonDecode(entry) as List;
     return ListTile(
       leading: const Icon(Icons.receipt_outlined),
       title: Text(row[0] as String),
-      subtitle: Text('Manually saved · ${row[2]}'),
+      subtitle: Text(
+        '${row.length > 3 ? 'Demo payment' : 'Manually saved'} · ${row[2]}',
+      ),
       trailing: Text('Rs ${row[1]}'),
     );
   }
@@ -211,11 +397,11 @@ class _WalletState extends State<Wallet> {
     final value = await showDialog<String>(
       context: page,
       builder: (ctx) => AlertDialog(
-        title: const Text('Record your payment'),
+        title: const Text('Enter demo payment'),
         content: TextField(
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: 'Amount paid in PKR'),
+          decoration: const InputDecoration(labelText: 'Amount in PKR'),
           onChanged: (v) => amount = v.trim(),
         ),
         actions: [
@@ -226,29 +412,55 @@ class _WalletState extends State<Wallet> {
           TextButton(
             onPressed: () {
               if (RegExp(r'^\d{1,9}(\.\d{1,2})?$').hasMatch(amount) &&
-                  double.parse(amount) > 0) {
+                  double.parse(amount) > 0 &&
+                  (double.parse(amount) * 100).round() <= balance) {
                 Navigator.pop(ctx, amount);
               } else {
                 ScaffoldMessenger.of(page).showSnackBar(
                   const SnackBar(
                     content: Text(
-                      'Enter a positive amount with up to two decimal places.',
+                      'Enter a positive amount within your available balance.',
                     ),
                   ),
                 );
               }
             },
-            child: const Text('Save'),
+            child: const Text('Review'),
           ),
         ],
       ),
     );
     if (value == null || !page.mounted) return;
+    final confirmed = await showDialog<bool>(
+      context: page,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirm demo payment'),
+        content: Text('Send Rs $value to ${service.provider}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true ||
+        !page.mounted ||
+        saving ||
+        (double.parse(value) * 100).round() > balance) {
+      return;
+    }
+    saving = true;
     final updated = [
       jsonEncode([
         service.provider,
         value,
         DateTime.now().toLocal().toString().split(' ').first,
+        'debit',
       ]),
       ...records,
     ];
@@ -261,6 +473,8 @@ class _WalletState extends State<Wallet> {
         );
       }
       return;
+    } finally {
+      saving = false;
     }
     if (!mounted) return;
     setState(() => records = updated);
@@ -351,7 +565,7 @@ class _WalletState extends State<Wallet> {
                         ),
                       ),
                     ),
-                    if (unknown?.isNotEmpty == true && widget.interpret != null)
+                    if (supportsLocalModel && unknown?.isNotEmpty == true)
                       OutlinedButton(
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
@@ -360,7 +574,7 @@ class _WalletState extends State<Wallet> {
                         child: Text(
                           resolving
                               ? 'Finding service…'
-                              : 'Send request to cloud AI',
+                              : 'Interpret on device',
                         ),
                       ),
                     if (reply != null)
@@ -374,6 +588,12 @@ class _WalletState extends State<Wallet> {
                   ],
                 ),
               ),
+              BankCardFace(
+                card: false,
+                amount: ready ? balanceText : "—",
+                frozen: frozen,
+              ),
+              VoiceBar(urdu: urdu, onRequest: voiceRequest),
               const SizedBox(height: 28),
               const Text(
                 'Services',
