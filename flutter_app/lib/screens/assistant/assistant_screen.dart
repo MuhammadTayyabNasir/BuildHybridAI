@@ -210,6 +210,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
             online: online,
             modelStatus: _modelStatus,
             fastMode: _service.fastMode,
+            batchCount: _service.batch?.length,
           ),
           Expanded(
             child: ListView.builder(
@@ -283,10 +284,12 @@ class _StatusStrip extends StatelessWidget {
     required this.online,
     required this.modelStatus,
     required this.fastMode,
+    this.batchCount,
   });
   final bool online;
   final String modelStatus;
   final bool fastMode;
+  final int? batchCount;
 
   @override
   Widget build(BuildContext context) {
@@ -311,6 +314,8 @@ class _StatusStrip extends StatelessWidget {
             icon: fastMode ? Icons.bolt : Icons.verified_user,
             label: fastMode ? 'Fast mode' : 'Confirm mode',
           ),
+          if (batchCount != null)
+            _Chip(icon: Icons.playlist_add, label: 'Batch: $batchCount/${AssistantService.maxBatch}'),
         ],
       ),
     );

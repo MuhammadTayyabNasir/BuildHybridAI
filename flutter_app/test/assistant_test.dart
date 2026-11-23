@@ -263,6 +263,42 @@ void main() {
       expect(r.en, contains('1 temperature/humidity reading'));
     });
 
+    test('batch dictation reads back once and saves all on haan', () async {
+      await svc.handle('batch shuru karo');
+      expect(svc.batch, isEmpty);
+      await svc.handle('chips humidity 45');
+      await svc.handle('nimko temperature 30');
+      final noSection = await svc.handle('humidity 40');
+      expect(noSection.en, contains('section'));
+      await svc.handle('wafer humidity paintalis');
+      expect(store.reports, isEmpty);
+      final review = await svc.handle('bas');
+      expect(review.pending?.kind, PendingKind.batchReview);
+      expect(review.pending?.batch, hasLength(3));
+      expect(review.en, startsWith('3 readings'));
+
+      final fixed = await svc.handle('number 2 temperature 32');
+      expect(fixed.pending?.batch[1].temperature, 32);
+      final removed = await svc.handle('number 3 hatao');
+      expect(removed.pending?.batch, hasLength(2));
+
+      final saved = await svc.handle('haan');
+      expect(saved.saved, isTrue);
+      expect(store.reports, hasLength(2));
+      final nimko = store.reports.values.firstWhere((r) => r.sectionId == 'nimko');
+      expect(nimko.rows.single.temperature, 32);
+      expect(nimko.rows.single.confirmedBy, 'operator1');
+    });
+
+    test('batch item number out of range is reported', () async {
+      await svc.handle('batch mode');
+      await svc.handle('chips humidity 45');
+      await svc.handle('done');
+      final r = await svc.handle('number 5 humidity 40');
+      expect(r.en, contains('no item 5'));
+      expect(svc.pending?.kind, PendingKind.batchReview);
+    });
+
     test('model answer source is reported', () async {
       final cloud = AssistantService(
         store: store,

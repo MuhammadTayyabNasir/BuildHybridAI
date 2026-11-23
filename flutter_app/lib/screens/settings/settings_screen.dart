@@ -15,6 +15,7 @@ import '../../services/local_storage_service.dart';
 import '../../services/report_service.dart';
 import '../../services/test_data_service.dart';
 import '../../services/th_threshold_service.dart';
+import 'widgets/assistant_settings_card.dart';
 import 'widgets/settings_section_header.dart';
 import 'widgets/day_dropdown.dart';
 import 'widgets/report_card.dart';
@@ -157,6 +158,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                const SettingsSectionHeader(title: 'Voice Assistant'),
+                AssistantSettingsCard(isAdmin: isAdmin),
+                const SizedBox(height: 20),
                 const SettingsSectionHeader(title: 'Entry Input Mode'),
                 Card(
                   child: Padding(

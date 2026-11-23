@@ -29,7 +29,7 @@ class NavTarget {
   final String? sectionId;
 }
 
-enum PendingKind { thReading, needSection, fastModeOn, fastModeOff, undo }
+enum PendingKind { thReading, needSection, fastModeOn, fastModeOff, undo, batchReview }
 
 /// A temperature / humidity reading waiting for the operator's "haan".
 class ThDraft {
@@ -61,9 +61,12 @@ class ThDraft {
 }
 
 class PendingAction {
-  const PendingAction(this.kind, {this.draft});
+  const PendingAction(this.kind, {this.draft, this.batch = const []});
   final PendingKind kind;
   final ThDraft? draft;
+
+  /// Items waiting for one confirmation in batch mode.
+  final List<ThDraft> batch;
 }
 
 /// One assistant turn, in both languages, with the engine that understood it.
@@ -141,6 +144,10 @@ class AssistantService {
   final DateTime Function() _clock;
 
   PendingAction? pending;
+
+  /// Readings collected while batch dictation is on (null when it is off).
+  List<ThDraft>? batch;
+  static const maxBatch = 20;
   ({String reportId, TempHumidityReport? before})? _lastSave;
 
   bool get fastMode => store.meta(fastModeKey) == '1';
@@ -183,6 +190,15 @@ class AssistantService {
       );
     }
     if (pending != null) return _answerPending(trimmed);
+    if (batch != null) return _collectBatch(trimmed);
+    if (rules.isBatchStart(trimmed)) {
+      batch = [];
+      return const AssistantReply(
+        en: 'Batch mode on. Say readings one by one, for example "chips humidity 45". Say "done" when finished and I will read them all back once.',
+        ur: 'بیچ موڈ آن۔ ریڈنگز ایک ایک کر کے بولیں، مثلاً "چپس ہیومیڈیٹی 45"۔ ختم ہونے پر "بس" بولیں، میں سب ایک ساتھ سناؤں گا۔',
+        source: AnswerSource.rules,
+      );
+    }
 
     final fast = rules.fastModeCommand(trimmed);
     if (fast != null) {
@@ -393,8 +409,146 @@ class AssistantService {
     );
   }
 
+  // ---------------------------------------------------------------- batch
+
+  Future<AssistantReply> _collectBatch(String text) async {
+    final items = batch!;
+    if (rules.isBatchEnd(text)) return _batchReview();
+    if (rules.confirmReply(text).kind == ConfirmKind.no && items.isEmpty) {
+      batch = null;
+      return _cancelled();
+    }
+    final intent = await understand(text);
+    if (intent.type != IntentType.addThReading) {
+      return AssistantReply(
+        en: 'In batch mode, say a reading like "nimko temperature 30", or "done" to finish.',
+        ur: 'بیچ موڈ میں ریڈنگ بولیں جیسے "نمکو ٹمپریچر 30"، یا ختم کرنے کے لیے "بس"۔',
+        source: intent.source,
+      );
+    }
+    if (intent.section == null) {
+      return AssistantReply(
+        en: 'Please include the section, for example "chips humidity 45".',
+        ur: 'سیکشن کا نام بھی بولیں، مثلاً "چپس ہیومیڈیٹی 45"۔',
+        source: intent.source,
+      );
+    }
+    final hour = _clock().hour;
+    final d = ThDraft(
+      sectionId: intent.section!,
+      shift: intent.shift ?? (hour >= 8 && hour < 20 ? 'morning' : 'night'),
+      source: intent.source,
+      confidence: intent.confidence,
+      temperature: intent.temperature,
+      humidity: intent.humidity,
+    );
+    final error = _rangeError(d);
+    if (error != null) {
+      return AssistantReply(en: error.$1, ur: error.$2, source: intent.source);
+    }
+    items.add(d);
+    final st = _statuses(d);
+    if (items.length >= maxBatch) return _batchReview();
+    return AssistantReply(
+      en: '#${items.length}: ${_readbackEn(d, st)}.',
+      ur: '#${items.length}: ${_readbackUr(d, st)}۔',
+      source: intent.source,
+      statuses: st,
+    );
+  }
+
+  AssistantReply _batchReview() {
+    final items = batch ?? const <ThDraft>[];
+    batch = null;
+    if (items.isEmpty) {
+      pending = null;
+      return const AssistantReply(
+        en: 'Batch closed. No readings were dictated.',
+        ur: 'بیچ بند۔ کوئی ریڈنگ نہیں بولی گئی۔',
+        source: AnswerSource.rules,
+      );
+    }
+    pending = PendingAction(PendingKind.batchReview, batch: items);
+    return _batchReadback(items);
+  }
+
+  AssistantReply _batchReadback(List<ThDraft> items) {
+    final en = StringBuffer();
+    final ur = StringBuffer();
+    var red = 0;
+    for (var i = 0; i < items.length; i++) {
+      final st = _statuses(items[i]);
+      if (st.values.contains('red')) red++;
+      en.write('${i + 1}. ${_readbackEn(items[i], st)}. ');
+      ur.write('${i + 1}۔ ${_readbackUr(items[i], st)}۔ ');
+    }
+    final warnEn = red == 0 ? '' : '$red ${red == 1 ? 'item is' : 'items are'} above the red limit. ';
+    final warnUr = red == 0 ? '' : '$red سرخ حد سے اوپر ہیں۔ ';
+    return AssistantReply(
+      en: '${items.length} readings: $en${warnEn}Save all? Say yes, no, "number 3 humidity 48" to correct, or "number 3 hatao" to remove.',
+      ur: '${items.length} ریڈنگز: $ur$warnUrسب محفوظ کروں؟ ہاں، نہیں، درستگی کے لیے "نمبر 3 ہیومیڈیٹی 48"، یا ہٹانے کے لیے "نمبر 3 ہٹاؤ" بولیں۔',
+      source: AnswerSource.rules,
+      pending: pending,
+    );
+  }
+
+  Future<AssistantReply> _answerBatch(PendingAction p, String text) async {
+    final cmd = rules.itemCommand(text);
+    if (cmd != null) {
+      final items = [...p.batch];
+      final i = cmd.item - 1;
+      if (i < 0 || i >= items.length) {
+        return AssistantReply(
+          en: 'There is no item ${cmd.item}. Items are 1 to ${items.length}.',
+          ur: 'آئٹم ${cmd.item} موجود نہیں۔ آئٹم 1 سے ${items.length} تک ہیں۔',
+          source: AnswerSource.rules,
+          pending: p,
+        );
+      }
+      if (cmd.remove) {
+        items.removeAt(i);
+      } else {
+        final d = items[i];
+        var t = cmd.temperature;
+        var h = cmd.humidity;
+        if (t == null && h == null && cmd.value != null) {
+          if (d.humidity != null && d.temperature == null) {
+            h = cmd.value;
+          } else if (d.temperature != null && d.humidity == null) {
+            t = cmd.value;
+          } else {
+            return const AssistantReply(
+              en: 'Say which value: for example "number 3 humidity 48".',
+              ur: 'کون سی ویلیو؟ مثلاً "نمبر 3 ہیومیڈیٹی 48" بولیں۔',
+              source: AnswerSource.rules,
+            );
+          }
+        }
+        final fixed = d.copyWith(temperature: t, humidity: h);
+        final error = _rangeError(fixed);
+        if (error != null) {
+          return AssistantReply(en: error.$1, ur: error.$2, source: AnswerSource.rules, pending: p);
+        }
+        items[i] = fixed;
+      }
+      if (items.isEmpty) return _cancelled();
+      pending = PendingAction(PendingKind.batchReview, batch: items);
+      return _batchReadback(items);
+    }
+    switch (rules.confirmReply(text).kind) {
+      case ConfirmKind.yes:
+        return _confirm(p);
+      case ConfirmKind.no:
+        return _cancelled();
+      case ConfirmKind.correct:
+      case ConfirmKind.unclear:
+        return _batchReadback(p.batch);
+    }
+  }
+
   Future<AssistantReply> _answerPending(String text) async {
     final p = pending!;
+    if (p.kind == PendingKind.batchReview) return _answerBatch(p, text);
     if (p.kind == PendingKind.needSection) {
       final sec = AssistantIntent.normalizeSection(RulesParser.normalize(text));
       if (sec == null) {
@@ -476,6 +630,17 @@ class AssistantService {
           en: 'Done. The last reading was removed.',
           ur: 'ہو گیا۔ آخری ریڈنگ ہٹا دی گئی۔',
           source: AnswerSource.rules,
+        );
+      case PendingKind.batchReview:
+        for (final d in p.batch) {
+          await _save(d, confirmedBy: store.userName);
+        }
+        _lastSave = null; // undo covers single readings only
+        return AssistantReply(
+          en: 'Saved ${p.batch.length} readings.',
+          ur: '${p.batch.length} ریڈنگز محفوظ ہو گئیں۔',
+          source: AnswerSource.rules,
+          saved: true,
         );
       case PendingKind.needSection:
         return _cancelled();

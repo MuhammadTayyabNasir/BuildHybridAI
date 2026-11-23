@@ -118,6 +118,36 @@ class RulesParser {
     return null;
   }
 
+  bool isBatchStart(String input) => _has(normalize(input), const [
+        'batch', 'bulk', 'ek saath', 'aik saath', 'sab ek sath', 'بیچ',
+      ]) &&
+      !isBatchEnd(input);
+
+  bool isBatchEnd(String input) => _hasWord(normalize(input), const [
+        'bas', 'done', 'khatam', 'finish', 'finished', 'ho gaya', 'ho gya',
+        'mukammal', 'بس', 'ختم',
+      ]);
+
+  /// "number 3 humidity 48", "3 number 48", "number 3 hatao".
+  ItemCommand? itemCommand(String input) {
+    final t = normalize(input);
+    final m = RegExp(r'(?:number|nambar|item|نمبر)\s*(\d+)').firstMatch(t) ??
+        RegExp(r'(\d+)\s*(?:number|nambar|نمبر)').firstMatch(t);
+    if (m == null) return null;
+    final item = int.parse(m[1]!);
+    final rest = t.replaceRange(m.start, m.end, ' ');
+    final remove = _has(rest, const ['hatao', 'hata do', 'remove', 'delete',
+      'nikalo', 'nikal do', 'cancel', 'ہٹاؤ', 'نکالو']);
+    final r = readingValues(rest);
+    return ItemCommand(
+      item: item,
+      remove: remove,
+      temperature: r.temperature,
+      humidity: r.humidity,
+      value: firstNumber(rest),
+    );
+  }
+
   bool isUndo(String input) => _has(normalize(input),
       const ['undo', 'wapas lo', 'wapis lo', 'last entry delete', 'pichli entry hata', 'واپس']);
 
@@ -325,4 +355,19 @@ class ConfirmReply {
   final double? value;
   final double? temperature;
   final double? humidity;
+}
+
+class ItemCommand {
+  const ItemCommand({
+    required this.item,
+    required this.remove,
+    this.temperature,
+    this.humidity,
+    this.value,
+  });
+  final int item;
+  final bool remove;
+  final double? temperature;
+  final double? humidity;
+  final double? value;
 }
