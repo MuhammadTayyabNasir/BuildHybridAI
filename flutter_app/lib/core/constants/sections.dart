@@ -16,35 +16,35 @@ class Sections {
   static const chips = SectionInfo(
     id: 'chips',
     name: 'Chips',
-    imagePath: 'assets/images/chips_masala.jpg',
+    imagePath: 'assets/images/section_chips.jpg',
     moistureRule: 'chips',
   );
 
   static const periPeri = SectionInfo(
     id: 'peri_peri',
     name: 'Peri Peri',
-    imagePath: 'assets/images/peri_peri_four_flavours.jpg',
+    imagePath: 'assets/images/section_peri_peri.jpg',
     moistureRule: 'peri_peri',
   );
 
   static const nimko = SectionInfo(
     id: 'nimko',
     name: 'Nimko',
-    imagePath: 'assets/images/daal_moong.jpg',
+    imagePath: 'assets/images/section_nimko.jpg',
     moistureRule: 'nimko',
   );
 
   static const wafer = SectionInfo(
     id: 'wafer',
     name: 'Wafer',
-    imagePath: 'assets/images/wafer_trio.jpg',
+    imagePath: 'assets/images/section_wafer.jpg',
     moistureRule: 'na',
   );
 
   static const chocolate = SectionInfo(
     id: 'chocolate',
     name: 'Chocolate',
-    imagePath: 'assets/images/chocolate_bar_black.jpg',
+    imagePath: 'assets/images/section_chocolate.jpg',
     moistureRule: 'na',
   );
 

@@ -275,14 +275,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.asset(
-                'assets/images/combined_products.jpg',
+                'assets/icon/icon.png',
                 fit: BoxFit.cover,
               ),
             ),
           ),
           const SizedBox(width: 10),
           const Flexible(
-            child: Text('4U Monitor', overflow: TextOverflow.ellipsis),
+            child: Text('PMA', overflow: TextOverflow.ellipsis),
           ),
           if (auth.isOfflineMode)
             Container(

@@ -10,7 +10,7 @@ class ShareService {
   ShareService._();
 
   static Future<void> shareReport(String path, {String? recipient}) async {
-    final caption = StringBuffer('4U Packing Monitor report');
+    final caption = StringBuffer('PMA packing report');
     if (recipient != null && recipient.trim().isNotEmpty) {
       caption.write(' — for ${recipient.trim()}');
     }

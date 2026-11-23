@@ -1,3 +1,4 @@
+import '../core/constants/firebase_config.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,9 +12,9 @@ import 'local_storage_service.dart';
 class AuthService {
   final LocalStorageService _local;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _db = FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: 'remoxindatabase');
+  final FirebaseFirestore _db = FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: FirebaseConfig.databaseId);
 
-  static const _emailDomain = '@4u.remoxin.com';
+  static const _emailDomain = '@pma.app';
 
   AuthService(this._local);
 

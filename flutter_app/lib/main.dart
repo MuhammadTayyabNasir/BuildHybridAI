@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'app.dart';
@@ -26,6 +28,26 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Firebase AI Logic requires App Check. Debug builds use the debug provider:
+  // register the debug token printed in logcat in the Firebase console.
+  try {
+    await FirebaseAppCheck.instance.activate(
+      providerAndroid: kDebugMode
+          ? const AndroidDebugProvider()
+          : const AndroidPlayIntegrityProvider(),
+      providerApple: kDebugMode
+          ? const AppleDebugProvider()
+          : const AppleAppAttestWithDeviceCheckFallbackProvider(),
+      providerWeb: kDebugMode
+          ? WebDebugProvider()
+          : ReCaptchaEnterpriseProvider(
+              const String.fromEnvironment('RECAPTCHA_ENTERPRISE_SITE_KEY'),
+            ),
+    );
+  } catch (e) {
+    debugPrint('App Check unavailable: $e');
+  }
 
   final localStorage = LocalStorageService();
   await localStorage.init();

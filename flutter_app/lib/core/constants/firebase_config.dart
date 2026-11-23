@@ -1,11 +1,19 @@
+import '../../firebase_options.dart';
+
+/// Firebase settings shared by the SDK and the REST fallback (Windows).
+///
+/// PMA uses the #BuildHybridAI Firebase project. The API key is the public
+/// client key from [DefaultFirebaseOptions]; access is restricted by App Check
+/// and Firestore security rules, not by keeping it secret.
 class FirebaseConfig {
   FirebaseConfig._();
 
-  static const projectId = 'remoxinenterprise-e0611';
-  static const databaseId = 'remoxindatabase';
+  static const projectId = 'buildhybridai-e2cc2';
 
-  // Web/Windows key used for REST API calls on all platforms
-  static const apiKey = 'REDACTED_API_KEY';
+  /// PMA stores its data in the project's default Firestore database.
+  static const databaseId = '(default)';
+
+  static String get apiKey => DefaultFirebaseOptions.web.apiKey;
 
   static String get firestoreBase =>
       'https://firestore.googleapis.com/v1/projects/$projectId/databases/$databaseId/documents';

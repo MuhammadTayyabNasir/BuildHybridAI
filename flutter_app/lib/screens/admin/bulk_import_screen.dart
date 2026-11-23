@@ -160,7 +160,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
         downloadsDir = dir?.path ?? (await getApplicationDocumentsDirectory()).path;
       }
 
-      final path = '$downloadsDir\\4U_Import_Template.xlsx';
+      final path = '$downloadsDir\\PMA_Import_Template.xlsx';
       await File(path).writeAsBytes(bytes);
 
       if (mounted) {

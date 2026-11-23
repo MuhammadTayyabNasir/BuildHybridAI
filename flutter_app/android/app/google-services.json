@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "125909801252",
+    "project_id": "buildhybridai-e2cc2",
+    "storage_bucket": "buildhybridai-e2cc2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:125909801252:android:0dddef506128e426517bb1",
+        "android_client_info": {
+          "package_name": "app.billsaathi.demo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXOsbfDOR_41rREh-IQqFZZ7KL535hNdw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

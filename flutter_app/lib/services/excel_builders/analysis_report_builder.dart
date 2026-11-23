@@ -37,7 +37,7 @@ class AnalysisReportBuilder {
           ? DateFormat('yyyy-MM-dd').format(from)
           : '${DateFormat('yyyy-MM-dd').format(from)}_to_${DateFormat('yyyy-MM-dd').format(to)}';
 
-      final path = '$downloadDir${sep}4U_Analysis_$stamp.xlsx';
+      final path = '$downloadDir${sep}PMA_Analysis_$stamp.xlsx';
       await File(path).writeAsBytes(bytes);
       return path;
     } finally {
@@ -541,7 +541,7 @@ class AnalysisReportBuilder {
 
   static void _xSheetHeader(xlsio.Worksheet sheet, String title, String periodLabel, int lastColIndex, {String? note}) {
     final lastCol = ExcelHelpers.colLetter(lastColIndex);
-    sheet.getRangeByIndex(1, 1).setText('REMOXIN ENTERPRISES — $title');
+    sheet.getRangeByIndex(1, 1).setText('PMA — $title');
     final tr = sheet.getRangeByName('A1:${lastCol}1');
     tr.merge();
     tr.cellStyle.bold = true;

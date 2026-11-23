@@ -1,11 +1,8 @@
 rules_version = '2';
 
-// Security rules for the 4U Packing Monitor.
+// Security rules for PMA — Packing & Monitoring App.
 //
-// IMPORTANT: deploy these to the *named* database `remoxindatabase`, NOT the
-// `(default)` database. In the Firebase console, pick the remoxindatabase
-// database before editing rules. With the CLI, bind a firestore target to that
-// database id and deploy to it.
+// PMA uses the project's `(default)` Firestore database.
 //
 // `request.auth` is populated by BOTH the Firebase Auth SDK (mobile) and the
 // REST id-token (Windows), so a single signed-in check covers every platform.

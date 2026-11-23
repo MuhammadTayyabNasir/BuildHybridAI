@@ -1,3 +1,4 @@
+import '../core/constants/firebase_config.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -31,7 +32,7 @@ class MachinesProvider extends ChangeNotifier {
   // ── gRPC Real-Time Listener ────────────────────────────────────────────────
   void startListening() {
     _sub?.cancel();
-    _sub = FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: 'remoxindatabase').collection('machines').snapshots().listen((snap) async {
+    _sub = FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: FirebaseConfig.databaseId).collection('machines').snapshots().listen((snap) async {
       final machines = snap.docs.map((d) => MachineModel.fromMap(d.data(), d.id)).toList();
 
       _cache.clear();

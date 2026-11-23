@@ -1,4 +1,4 @@
-package com.remoxin4u.remoxin_enterprise
+package app.pma.monitor
 
 import io.flutter.embedding.android.FlutterActivity
 

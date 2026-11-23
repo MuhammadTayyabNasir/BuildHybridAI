@@ -27,7 +27,7 @@ class _AppState extends State<App> {
     final auth = context.watch<AuthProvider>();
 
     return MaterialApp(
-      title: '4U Packing Monitor',
+      title: 'PMA — Packing & Monitoring',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
@@ -71,11 +71,11 @@ class _SplashScreen extends StatelessWidget {
               CircularProgressIndicator(color: Colors.white),
               SizedBox(height: 24),
               Text(
-                '4U Packing Monitor',
+                'PMA — Packing & Monitoring',
                 style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700),
               ),
               Text(
-                'Remoxin Enterprise',
+                'Packing & Monitoring App',
                 style: TextStyle(color: Colors.white70, fontSize: 14),
               ),
             ],

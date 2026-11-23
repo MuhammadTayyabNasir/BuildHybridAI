@@ -1,3 +1,4 @@
+import '../core/constants/firebase_config.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,7 +11,7 @@ class ThThresholdService {
   static const _collection = 'th_thresholds';
   static const _cacheKeyPrefix = 'th_threshold_cache_';
 
-  final FirebaseFirestore _db = FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: 'remoxindatabase');
+  final FirebaseFirestore _db = FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: FirebaseConfig.databaseId);
 
   final ValueNotifier<Map<String, ThThreshold>> current =
   ValueNotifier<Map<String, ThThreshold>>({});

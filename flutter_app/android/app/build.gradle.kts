@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.remoxin4u.remoxin_enterprise"
+    namespace = "app.pma.monitor"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -18,16 +18,14 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-    }
-
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.remoxin4u.remoxin_enterprise"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // The Firebase project currently has an Android app registered only for
+        // this id, so google-services.json and App Check keep working. When a PMA
+        // Android app (app.pma.monitor) is registered in the Firebase console,
+        // replace google-services.json and change this to "app.pma.monitor".
+        applicationId = "app.billsaathi.demo"
+        // Gemini Nano via Firebase AI Logic on-device needs API 26+.
+        minSdk = 26
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -35,11 +33,24 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}
+
+dependencies {
+    // Firebase AI Logic hybrid inference (on-device Gemini Nano + cloud fallback)
+    // is exposed to Flutter through the MethodChannel in MainActivity.kt.
+    implementation("com.google.firebase:firebase-ai:18.2.0")
+    implementation("com.google.firebase:firebase-ai-ondevice:16.0.0-beta08")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
 }
 
 flutter {

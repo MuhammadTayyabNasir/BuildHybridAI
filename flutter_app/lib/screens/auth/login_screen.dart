@@ -82,12 +82,12 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(24),
-            child: Image.asset('assets/images/factory_image.jpg', fit: BoxFit.cover),
+            child: Image.asset('assets/images/factory.jpg', fit: BoxFit.cover),
           ),
         ),
         const SizedBox(height: 16),
         const Text(
-          '4U',
+          'PMA',
           style: TextStyle(
             color: Colors.white,
             fontSize: 36,
@@ -101,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 4),
         const Text(
-          'Remoxin Enterprise',
+          'Packing & Monitoring App',
           style: TextStyle(color: Colors.white54, fontSize: 12),
         ),
       ],

@@ -5,9 +5,12 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   cloud_firestore
   connectivity_plus
+  firebase_app_check
   firebase_auth
   firebase_core
+  flutter_tts
   share_plus
+  speech_to_text_windows
   sqlite3_flutter_libs
   url_launcher_windows
 )

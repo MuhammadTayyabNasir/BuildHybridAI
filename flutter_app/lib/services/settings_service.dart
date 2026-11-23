@@ -1,3 +1,4 @@
+import '../core/constants/firebase_config.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -16,7 +17,7 @@ class ShiftSettings {
 }
 
 class SettingsService extends ChangeNotifier {
-  final FirebaseFirestore _db = FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: 'remoxindatabase');
+  final FirebaseFirestore _db = FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: FirebaseConfig.databaseId);
   StreamSubscription? _sub;
   ShiftSettings _shiftSettings = ShiftSettings.defaults();
 

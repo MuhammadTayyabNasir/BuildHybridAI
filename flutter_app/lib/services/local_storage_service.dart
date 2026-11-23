@@ -12,7 +12,7 @@ import '../models/temp_humidity_model.dart';
 import '../models/user_model.dart';
 
 class LocalStorageService {
-  static const _dbName = 'remoxin_db.sqlite';
+  static const _dbName = 'pma_db.sqlite';
   static const _dbVersion = 2;
   static const String _kOfflineUser = 'offline_user_data';
   static const String _kOfflinePass = 'offline_user_pass';

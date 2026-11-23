@@ -30,7 +30,7 @@ def bold(sz=11, c="000000"): return Font(bold=True, size=sz, color=c)
 def sheet_header(ws, title, ncols, note):
     last = chr(64 + ncols)
     ws.merge_cells(f"A1:{last}1")
-    c = ws["A1"]; c.value = f"REMOXIN ENTERPRISES — {title}"
+    c = ws["A1"]; c.value = f"PMA — {title}"
     c.font = bold(13, "FFFFFF"); c.fill = fill(NAVY); c.alignment = Alignment(horizontal="center")
     ws.merge_cells(f"A2:{last}2")
     c = ws["A2"]; c.value = f"Period: 12 May – 06 Jul 2026   ·   {note}"

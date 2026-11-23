@@ -17,23 +17,26 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        return ios;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for ios - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
           'you can reconfigure this by running the FlutterFire CLI again.',
         );
       case TargetPlatform.windows:
-        return windows;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for windows - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -46,30 +49,21 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'REDACTED_API_KEY',
-    appId: '1:392801795404:android:80a91c6b501bfcb8d8e3e9',
-    messagingSenderId: '392801795404',
-    projectId: 'remoxinenterprise-e0611',
-    storageBucket: 'remoxinenterprise-e0611.firebasestorage.app',
-  );
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'REDACTED_API_KEY',
-    appId: '1:392801795404:ios:66495b3e6ea1870dd8e3e9',
-    messagingSenderId: '392801795404',
-    projectId: 'remoxinenterprise-e0611',
-    storageBucket: 'remoxinenterprise-e0611.firebasestorage.app',
-    iosBundleId: 'com.remoxin4u.remoxinEnterprise',
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyDd4gEZO241b7Pt-c_4QmQP4o4P9B9swF4',
+    appId: '1:125909801252:web:b8bb13aac0d0553a517bb1',
+    messagingSenderId: '125909801252',
+    projectId: 'buildhybridai-e2cc2',
+    authDomain: 'buildhybridai-e2cc2.firebaseapp.com',
+    storageBucket: 'buildhybridai-e2cc2.firebasestorage.app',
+    measurementId: 'G-7SKP30VQCM',
   );
 
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'REDACTED_API_KEY',
-    appId: '1:392801795404:web:d0c8b9f414d585afd8e3e9',
-    messagingSenderId: '392801795404',
-    projectId: 'remoxinenterprise-e0611',
-    authDomain: 'remoxinenterprise-e0611.firebaseapp.com',
-    storageBucket: 'remoxinenterprise-e0611.firebasestorage.app',
-    measurementId: 'G-97G7YRHCBD',
-    databaseURL: 'https://remoxinenterprise-e0611.firebaseio.com'
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyBXOsbfDOR_41rREh-IQqFZZ7KL535hNdw',
+    appId: '1:125909801252:android:0dddef506128e426517bb1',
+    messagingSenderId: '125909801252',
+    projectId: 'buildhybridai-e2cc2',
+    storageBucket: 'buildhybridai-e2cc2.firebasestorage.app',
   );
 }

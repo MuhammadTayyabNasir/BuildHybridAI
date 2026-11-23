@@ -33,7 +33,7 @@ class RemoteThChange {
 ///
 /// This is the real-time backend: it listens to Firestore over gRPC and
 /// pushes deltas as they happen — no polling, no timer. It targets the
-/// *named* database `remoxindatabase` (not `(default)`), which the SDK only
+/// database in [FirebaseConfig.databaseId], which the SDK only
 /// reaches through `instanceFor(databaseId:)`.
 ///
 /// Reads are scoped by `updatedAt` so a device only ever streams what changed

@@ -1,3 +1,4 @@
+import '../core/constants/firebase_config.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -47,7 +48,7 @@ class EntriesProvider extends ChangeNotifier {
     _snapshotSub?.cancel();
 
     // Listen to all packing entries in real-time (gRPC)
-    _snapshotSub = FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: 'remoxindatabase')
+    _snapshotSub = FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: FirebaseConfig.databaseId)
         .collection('packing_entries')
         .snapshots()
         .listen((snap) async {

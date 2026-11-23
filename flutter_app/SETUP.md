@@ -1,4 +1,4 @@
-# 4U Packing Monitor — Setup Guide
+# PMA — Setup Guide
 
 ## Prerequisites
 - Flutter 3.x SDK installed
@@ -9,12 +9,12 @@
 
 ## Step 1 — Connect Firebase
 
-Your Firebase project is `RemoxinEnterprise` with database `remoxindatabase`.
+PMA uses the #BuildHybridAI Firebase project `buildhybridai-e2cc2` and its `(default)` Firestore database.
 
 Run this in the project root:
 
 ```bash
-flutterfire configure --project=remoxinenterprise
+flutterfire configure --project=buildhybridai-e2cc2
 ```
 
 Select platforms: **android**, **ios**, **web**, **windows**
@@ -71,7 +71,7 @@ Run this once in a Dart script or via Firebase Auth console:
 
 **Option A — Firebase Console:**
 1. Go to Firebase Console → Authentication → Users → Add User
-2. Email: `admin@4u.remoxin.internal`
+2. Email: `admin@pma.app`
 3. Password: `admin`
 4. Then add a Firestore document at `users/{uid}`:
    ```json

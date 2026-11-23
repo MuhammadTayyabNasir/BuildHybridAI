@@ -53,7 +53,7 @@ class EntriesReportBuilder {
           ? DateFormat('yyyy-MM-dd').format(from)
           : '${DateFormat('yyyy-MM-dd').format(from)}_to_${DateFormat('yyyy-MM-dd').format(to)}';
 
-      final path = '$downloadDir${sep}4U_Entries_$stamp.xlsx';
+      final path = '$downloadDir${sep}PMA_Entries_$stamp.xlsx';
       final bytes = wb.saveAsStream();
       await File(path).writeAsBytes(bytes);
       return path;
@@ -74,7 +74,7 @@ class EntriesReportBuilder {
 
     // ── Header (rows 1–2) ─────────────────────────────────────────────────
     final title = sheet.getRangeByIndex(1, 1);
-    title.setText('REMOXIN ENTERPRISES — Packing Entries Log');
+    title.setText('PMA — Packing Entries Log');
     final titleRange = sheet.getRangeByName('A1:${lastCol}1');
     titleRange.merge();
     titleRange.cellStyle
@@ -235,7 +235,7 @@ class EntriesReportBuilder {
       ) {
     sheet.name = 'TempHumidity';
 
-    sheet.getRangeByIndex(1, 1).setText('REMOXIN ENTERPRISES — Temp & Humidity Log');
+    sheet.getRangeByIndex(1, 1).setText('PMA — Temp & Humidity Log');
     final title = sheet.getRangeByName('A1:G1');
     title.merge();
     title.cellStyle
