@@ -33,7 +33,7 @@ behind a MethodChannel, and reports the SDK's `inferenceSource` back to Dart.
 App Check protects every call (debug provider in debug builds, Play Integrity
 in release).
 
-## What works today (slice 1)
+## What works today
 
 - **PMA assistant** (dashboard → *Ask PMA*): mic + text box, Urdu (ur-PK) and
   English speech-to-text and text-to-speech, source badge on every answer
@@ -47,9 +47,18 @@ in release).
 - Audit fields on every assistant reading: who, when, source, confirmed by
 - Everything is local-first (SQLite) and syncs to Firestore when online
 
-Planned next: analyst summaries (short on-device, long in the cloud), cloud
-dashboards with spoken explanations, automations with alerts to the manager,
-photo and PDF extraction of paper forms, a redesigned UI, and Chrome web.
+- **Insights** tab: cloud Gemini (`ONLY_IN_CLOUD`) builds a dashboard from
+  aggregated, name-free numbers as a small JSON spec (KPIs, line/bar charts,
+  actions, spoken explanation). The app validates it against a whitelist,
+  renders it with its own charts and reads the explanation aloud in Urdu or
+  English. A one-line summary runs on-device; with no model the phone builds
+  the same dashboard deterministically.
+- New look: gradient hero with big numbers and trend pills, *Today* view of
+  what is still missing this shift, and a floating pill navigation bar.
+
+Planned next: batch dictation, voice packing entries, automations with alerts
+to the manager, photo and PDF extraction of paper forms, restyling the older
+screens, and Chrome web.
 
 ## Run it
 
