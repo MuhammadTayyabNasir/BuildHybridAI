@@ -17,10 +17,17 @@ typedef LocalTextGenerator = Future<String?> Function(HelpTopic topic);
 /// A public glossary topic is the entire cloud input. No image, entered value,
 /// transcript, or raw screen state can enter this API.
 class CoachService {
-  const CoachService({this.cloudTextGenerator, this.localTextGenerator});
+  const CoachService({
+    this.cloudTextGenerator,
+    this.localTextGenerator,
+    this.cloudTimeout = const Duration(seconds: 45),
+    this.localTimeout = const Duration(minutes: 5),
+  });
 
   final CloudTextGenerator? cloudTextGenerator;
   final LocalTextGenerator? localTextGenerator;
+  final Duration cloudTimeout;
+  final Duration localTimeout;
 
   HelpReply reviewedHint(HelpTopic topic, AppLanguage language) {
     return HelpReply(switch ((topic, language)) {
@@ -54,7 +61,9 @@ class CoachService {
     final generator = cloudTextGenerator;
     if (generator == null) return reviewedHint(topic, language);
     try {
-      final reply = (await generator(publicPrompt(topic, language)))?.trim();
+      final reply = (await generator(
+        publicPrompt(topic, language),
+      ).timeout(cloudTimeout))?.trim();
       if (reply == null ||
           reply.isEmpty ||
           reply.length > 360 ||
@@ -78,7 +87,7 @@ class CoachService {
       return reviewedHint(topic, language);
     }
     try {
-      final reply = (await generator(topic))?.trim();
+      final reply = (await generator(topic).timeout(localTimeout))?.trim();
       if (reply == null ||
           reply.isEmpty ||
           reply.length > 360 ||

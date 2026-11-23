@@ -38,6 +38,7 @@ class _PracticeFlowState extends State<_PracticeFlow> {
   HelpReply? _reply;
   HelpTopic _topic = HelpTopic.findReference;
   bool _loading = false;
+  int _helpRequestId = 0;
 
   bool get _urdu => _language == AppLanguage.urdu;
   String _t(String en, String ur) => _urdu ? ur : en;
@@ -48,7 +49,13 @@ class _PracticeFlowState extends State<_PracticeFlow> {
     super.dispose();
   }
 
-  void _go(_Page page) => setState(() => _page = page);
+  void _go(_Page page) => setState(() {
+    if (_page != page) {
+      _helpRequestId++;
+      _loading = false;
+    }
+    _page = page;
+  });
 
   void _back() => _go(switch (_page) {
     _Page.home || _Page.addBill => _Page.home,
@@ -66,6 +73,8 @@ class _PracticeFlowState extends State<_PracticeFlow> {
   }
 
   void _openHelp() => setState(() {
+    _helpRequestId++;
+    _loading = false;
     _topic = _issue == ReferenceIssue.meterNumber
         ? HelpTopic.meterIsDifferent
         : HelpTopic.findReference;
@@ -74,9 +83,14 @@ class _PracticeFlowState extends State<_PracticeFlow> {
   });
 
   Future<void> _askAi() async {
+    final requestId = ++_helpRequestId;
+    final topic = _topic;
+    final language = _language;
     setState(() => _loading = true);
-    final reply = await widget.coach.explain(_topic, _language);
-    if (!mounted) return;
+    final reply = await widget.coach.explain(topic, language);
+    if (!mounted || requestId != _helpRequestId || _page != _Page.assistant) {
+      return;
+    }
     setState(() {
       _reply = reply;
       _loading = false;
@@ -84,9 +98,14 @@ class _PracticeFlowState extends State<_PracticeFlow> {
   }
 
   Future<void> _askOnDevice() async {
+    final requestId = ++_helpRequestId;
+    final topic = _topic;
+    final language = _language;
     setState(() => _loading = true);
-    final reply = await widget.coach.explainOnDevice(_topic, _language);
-    if (!mounted) return;
+    final reply = await widget.coach.explainOnDevice(topic, language);
+    if (!mounted || requestId != _helpRequestId || _page != _Page.assistant) {
+      return;
+    }
     setState(() {
       _reply = reply;
       _loading = false;
@@ -94,41 +113,52 @@ class _PracticeFlowState extends State<_PracticeFlow> {
   }
 
   @override
-  Widget build(BuildContext context) => SaathiPage(
-    key: ValueKey(_page),
-    title: switch (_page) {
-      _Page.home => _t('Pay with confidence', 'اعتماد کے ساتھ بل کی مشق کریں'),
-      _Page.addBill => _t('Add a sample bill', 'نمونہ بل شامل کریں'),
-      _Page.reference => _t('Find the right number', 'درست نمبر تلاش کریں'),
-      _Page.assistant => _t('Let’s find it together', 'آئیے ساتھ تلاش کریں'),
-      _Page.review => _t(
-        'Review the practice payment',
-        'مشق کی ادائیگی کی تفصیلات دیکھیں',
-      ),
-      _Page.complete => _t('Practice complete', 'مشق مکمل ہوئی'),
+  Widget build(BuildContext context) => PopScope(
+    canPop: _page == _Page.home,
+    onPopInvokedWithResult: (didPop, _) {
+      if (!didPop && _page != _Page.home) _back();
     },
-    body: switch (_page) {
-      _Page.home => _home(),
-      _Page.addBill => _addBill(),
-      _Page.reference => _reference(),
-      _Page.assistant => _assistant(),
-      _Page.review => _review(),
-      _Page.complete => _complete(),
-    },
-    language: _language,
-    onLanguageChanged: (language) => setState(() {
-      _language = language;
-      if (_page == _Page.assistant) {
-        _reply = widget.coach.reviewedHint(_topic, language);
-      }
-    }),
-    step: switch (_page) {
-      _Page.addBill => 1,
-      _Page.reference || _Page.assistant => 2,
-      _Page.review => 3,
-      _ => null,
-    },
-    onBack: _page == _Page.home ? null : _back,
+    child: SaathiPage(
+      key: ValueKey(_page),
+      title: switch (_page) {
+        _Page.home => _t(
+          'Pay with confidence',
+          'اعتماد کے ساتھ بل کی مشق کریں',
+        ),
+        _Page.addBill => _t('Add a sample bill', 'نمونہ بل شامل کریں'),
+        _Page.reference => _t('Find the right number', 'درست نمبر تلاش کریں'),
+        _Page.assistant => _t('Let’s find it together', 'آئیے ساتھ تلاش کریں'),
+        _Page.review => _t(
+          'Review the practice payment',
+          'مشق کی ادائیگی کی تفصیلات دیکھیں',
+        ),
+        _Page.complete => _t('Practice complete', 'مشق مکمل ہوئی'),
+      },
+      body: switch (_page) {
+        _Page.home => _home(),
+        _Page.addBill => _addBill(),
+        _Page.reference => _reference(),
+        _Page.assistant => _assistant(),
+        _Page.review => _review(),
+        _Page.complete => _complete(),
+      },
+      language: _language,
+      onLanguageChanged: (language) => setState(() {
+        _helpRequestId++;
+        _loading = false;
+        _language = language;
+        if (_page == _Page.assistant) {
+          _reply = widget.coach.reviewedHint(_topic, language);
+        }
+      }),
+      step: switch (_page) {
+        _Page.addBill => 1,
+        _Page.reference || _Page.assistant => 2,
+        _Page.review => 3,
+        _ => null,
+      },
+      onBack: _page == _Page.home ? null : _back,
+    ),
   );
 
   Widget _home() => Column(
@@ -321,7 +351,7 @@ class _PracticeFlowState extends State<_PracticeFlow> {
                   HelpSource.onDeviceAi => 'Source: Gemini on this device',
                   HelpSource.reviewedGuide => _t(
                     'Source: built-in guide',
-                    'ماخذ: نظرثانی شدہ رہنمائی',
+                    'ماخذ: ایپ میں موجود رہنمائی',
                   ),
                 }, style: Theme.of(context).textTheme.bodyMedium),
               ],
@@ -336,6 +366,11 @@ class _PracticeFlowState extends State<_PracticeFlow> {
                 : 'Explain on this device',
             secondary: true,
             onPressed: _loading ? null : _askOnDevice,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'First use may download an on-device model. Your bill details stay on this device.',
+            style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 12),
         ],

@@ -4,6 +4,9 @@ import com.google.firebase.Firebase
 import com.google.firebase.ai.InferenceMode
 import com.google.firebase.ai.OnDeviceConfig
 import com.google.firebase.ai.ai
+import com.google.firebase.ai.ondevice.DownloadStatus
+import com.google.firebase.ai.ondevice.FirebaseAIOnDevice
+import com.google.firebase.ai.ondevice.OnDeviceModelStatus
 import com.google.firebase.ai.type.GenerativeBackend
 import com.google.firebase.ai.type.PublicPreviewAPI
 import io.flutter.embedding.engine.FlutterEngine
@@ -13,7 +16,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 
 @OptIn(PublicPreviewAPI::class)
 class MainActivity : FlutterActivity()
@@ -38,6 +44,7 @@ class MainActivity : FlutterActivity()
                 }
                 scope.launch {
                     try {
+                        ensureOnDeviceModelReady()
                         val model = Firebase.ai(backend = GenerativeBackend.googleAI())
                             .generativeModel(
                                 modelName = "gemini-3.8-flash",
@@ -49,6 +56,31 @@ class MainActivity : FlutterActivity()
                     }
                 }
             }
+    }
+
+    private suspend fun ensureOnDeviceModelReady() = withTimeout(270_000L) {
+        when (FirebaseAIOnDevice.checkStatus()) {
+            OnDeviceModelStatus.AVAILABLE -> Unit
+            OnDeviceModelStatus.UNAVAILABLE ->
+                throw IllegalStateException("This device does not support the local model.")
+            OnDeviceModelStatus.DOWNLOADABLE -> {
+                val finish = FirebaseAIOnDevice.download().first { status ->
+                    status is DownloadStatus.DownloadCompleted ||
+                        status is DownloadStatus.DownloadFailed
+                }
+                if (finish is DownloadStatus.DownloadFailed) {
+                    throw IllegalStateException("Local model download failed.")
+                }
+            }
+            OnDeviceModelStatus.DOWNLOADING -> {
+                while (FirebaseAIOnDevice.checkStatus() == OnDeviceModelStatus.DOWNLOADING) {
+                    delay(1_500)
+                }
+            }
+        }
+        if (FirebaseAIOnDevice.checkStatus() != OnDeviceModelStatus.AVAILABLE) {
+            throw IllegalStateException("The local model is not ready.")
+        }
     }
 
     override fun onDestroy() {

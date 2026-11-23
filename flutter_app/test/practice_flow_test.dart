@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bill_saathi/core/coach_service.dart';
 import 'package:bill_saathi/core/reference_validator.dart';
 import 'package:bill_saathi/core/sample_bill.dart';
@@ -54,6 +56,30 @@ void main() {
       AppLanguage.english,
     );
     expect(reply.source, HelpSource.reviewedGuide);
+  });
+
+  test('stalled AI generators return the built-in guide', () async {
+    final stalled = Completer<String?>();
+    final coach = CoachService(
+      cloudTextGenerator: (_) => stalled.future,
+      localTextGenerator: (_) => stalled.future,
+      cloudTimeout: const Duration(milliseconds: 1),
+      localTimeout: const Duration(milliseconds: 1),
+    );
+    expect(
+      (await coach.explain(
+        HelpTopic.findReference,
+        AppLanguage.english,
+      )).source,
+      HelpSource.reviewedGuide,
+    );
+    expect(
+      (await coach.explainOnDevice(
+        HelpTopic.findReference,
+        AppLanguage.english,
+      )).source,
+      HelpSource.reviewedGuide,
+    );
   });
 
   test(
@@ -117,5 +143,48 @@ void main() {
     await tester.tap(find.text('Confirm practice payment'));
     await tester.pumpAndSettle();
     expect(find.text('No payment was sent'), findsOneWidget);
+  });
+
+  testWidgets('an old AI reply cannot replace guidance after language change', (
+    tester,
+  ) async {
+    final pending = Completer<String?>();
+    await tester.pumpWidget(
+      BillSaathiApp(
+        coach: CoachService(cloudTextGenerator: (_) => pending.future),
+      ),
+    );
+    await tester.tap(find.text('Start practice'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Use this sample bill'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Show me on the bill'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Show me on the bill'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Explain with Gemini'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Explain with Gemini'));
+    await tester.pump();
+    await tester.tap(find.text('EN'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('اردو'));
+    await tester.pumpAndSettle();
+    pending.complete('Stale English answer.');
+    await tester.pump();
+    expect(find.text('Stale English answer.'), findsNothing);
+    expect(find.text('ماخذ: ایپ میں موجود رہنمائی'), findsOneWidget);
+  });
+
+  testWidgets('system Back returns to the preceding practice page', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const BillSaathiApp(coach: CoachService()));
+    await tester.tap(find.text('Start practice'));
+    await tester.pumpAndSettle();
+    expect(find.text('Use this sample bill'), findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Start practice'), findsOneWidget);
   });
 }
