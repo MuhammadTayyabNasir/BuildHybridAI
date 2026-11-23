@@ -19,6 +19,7 @@ enum IntentType {
   addThReading('add_th_reading'),
   addPackingEntry('add_packing_entry'),
   openScreen('open_screen'),
+  dailySummary('daily_summary'),
   unknown('unknown');
 
   const IntentType(this.wire);

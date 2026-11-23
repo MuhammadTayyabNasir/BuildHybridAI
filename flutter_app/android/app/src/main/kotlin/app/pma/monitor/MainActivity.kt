@@ -57,6 +57,7 @@ class MainActivity : FlutterActivity() {
                         "add_th_reading",
                         "add_packing_entry",
                         "open_screen",
+                        "daily_summary",
                         "unknown",
                     ),
                     "What the operator wants",
@@ -175,6 +176,7 @@ class MainActivity : FlutterActivity() {
           (e.g. "Peri Peri section ki humidity 45 dal do")
         - add_packing_entry: record a packing check (product, weight)
         - open_screen: open a sheet or screen (e.g. "Peri Peri ki sheet kholo")
+        - daily_summary: a short report of today (e.g. "aaj ki report kya hai")
         - unknown: anything else
         Sections: chips, peri_peri (Peri Peri), nimko, wafer, chocolate.
         Urdu number words count, e.g. "paintalis" = 45, "pachees" = 25.

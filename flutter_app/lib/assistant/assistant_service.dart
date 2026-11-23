@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../analytics/pma_metrics.dart';
 import '../core/constants/sections.dart';
 import '../models/packing_entry_model.dart';
 import '../models/temp_humidity_model.dart';
@@ -226,6 +227,8 @@ class AssistantService {
         return _startReading(intent);
       case IntentType.openScreen:
         return _open(intent);
+      case IntentType.dailySummary:
+        return dailySummary(intent);
       case IntentType.addPackingEntry:
         final section = intent.section;
         return AssistantReply(
@@ -270,6 +273,53 @@ class AssistantService {
       ur: '$whenUr آپ نے$scopeUr $packing پیکنگ انٹریاں اور $readings ٹمپریچر/ہیومیڈیٹی ریڈنگز کیں۔',
       source: intent.source,
     );
+  }
+
+  /// Short report of today. Facts are computed on the phone; Gemini (Nano
+  /// when available) only phrases them, in English and Urdu. Without a model
+  /// the same facts are read out as fixed sentences.
+  Future<AssistantReply> dailySummary(AssistantIntent intent) async {
+    final now = _clock();
+    final m = PmaMetrics(
+      entries: store.packingEntries(),
+      reports: store.thReports(),
+      threshold: store.thresholdFor,
+      now: now,
+    );
+    final today = m.today;
+    var red = 0;
+    for (final r in store.thReports().where((r) => _sameDay(r.date, today))) {
+      final th = store.thresholdFor(r.sectionId);
+      for (final row in r.rows) {
+        if ((row.temperature != null && th.classifyTemp(row.temperature!) == 'red') ||
+            (row.humidity != null && th.classifyHumidity(row.humidity!) == 'red')) {
+          red++;
+        }
+      }
+    }
+    final readings = m.readingsOn(today);
+    final checks = m.entriesOn(today);
+    final missing = missingReadings(now).length;
+    final factsEn = 'Today: $readings temperature/humidity readings ($red above the red limit), '
+        '$checks packing checks, $missing scheduled readings still missing.';
+    final factsUr = 'آج: $readings ٹمپریچر/ہیومیڈیٹی ریڈنگز ($red سرخ حد سے اوپر)، '
+        '$checks پیکنگ چیکس، $missing شیڈول ریڈنگز باقی۔';
+    final answer = await ai.generate(
+      'You brief a snack factory shift supervisor. Using ONLY these facts, write two lines. '
+      'Line 1: one or two short English sentences. Line 2: the same in Urdu script. '
+      'No other text. Facts: $factsEn',
+    );
+    if (answer != null) {
+      final lines = answer.text
+          .split(RegExp(r'[\r\n]+'))
+          .map((l) => l.replaceFirst(RegExp(r'^\s*(line\s*\d\s*[:.-]|\d[.)])\s*', caseSensitive: false), '').trim())
+          .where((l) => l.isNotEmpty)
+          .toList();
+      if (lines.length >= 2 && lines[0].length < 400 && lines[1].length < 400) {
+        return AssistantReply(en: lines[0], ur: lines[1], source: answer.source);
+      }
+    }
+    return AssistantReply(en: factsEn, ur: factsUr, source: AnswerSource.rules);
   }
 
   /// Scheduled readings (per section, per started shift) that are missing or

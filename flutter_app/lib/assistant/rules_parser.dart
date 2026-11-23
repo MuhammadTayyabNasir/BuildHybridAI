@@ -45,6 +45,15 @@ class RulesParser {
         confidence: reading.guessed ? 0.6 : 0.9,
       );
     }
+    if (_has(text, _summaryWords)) {
+      return AssistantIntent(
+        type: IntentType.dailySummary,
+        source: AnswerSource.rules,
+        section: section,
+        period: _period(text),
+        confidence: 0.9,
+      );
+    }
     if (_has(text, _countWords)) {
       return AssistantIntent(
         type: IntentType.countEntries,
@@ -271,6 +280,9 @@ class RulesParser {
   static const _missingWords = ['miss', 'reh gayi', 'reh gaye', 'rah gayi',
     'rah gaye', 'reh gai', 'baqi', 'baaki', 'baki', 'chhoot', 'chhut', 'choot',
     'skipped', 'pending', 'رہ گئی', 'رہ گئے', 'مس', 'باقی'];
+  static const _summaryWords = ['report kya', 'report batao', 'ki report',
+    'ka report', 'summary', 'khulasa', 'kaisa raha', 'kaisi rahi', 'haal',
+    'خلاصہ', 'رپورٹ'];
   static const _countWords = ['kitni', 'kitne', 'how many', 'count', 'ginti',
     'total', 'کتنی', 'کتنے'];
   static const _yesWords = ['haan', 'han', 'haa', 'ha', 'ji', 'jee', 'ok',

@@ -299,6 +299,25 @@ void main() {
       expect(svc.pending?.kind, PendingKind.batchReview);
     });
 
+    test('daily summary uses local facts offline', () async {
+      expect(rules.parse('aaj ki report kya hai').type, IntentType.dailySummary);
+      await svc.handle('chips humidity 70');
+      await svc.handle('haan');
+      final r = await svc.handle('aaj ki report kya hai');
+      expect(r.source, AnswerSource.rules);
+      expect(r.en, contains('1 temperature/humidity readings (1 above the red limit)'));
+    });
+
+    test('daily summary is phrased by the model when available', () async {
+      final ai = _SummaryAi();
+      final s = AssistantService(store: store, ai: ai, clock: () => now);
+      final r = await s.handle('aaj ki report kya hai');
+      expect(r.source, AnswerSource.onDevice);
+      expect(r.en, 'All quiet today.');
+      expect(r.ur, 'آج سب ٹھیک رہا۔');
+      expect(ai.prompt, contains('0 packing checks'));
+    });
+
     test('model answer source is reported', () async {
       final cloud = AssistantService(
         store: store,
@@ -309,4 +328,15 @@ void main() {
       expect(r.source, AnswerSource.cloud);
     });
   });
+}
+
+class _SummaryAi extends OfflineAi {
+  String prompt = '';
+  @override
+  bool get available => true;
+  @override
+  Future<HybridAnswer?> generate(String prompt, {bool cloudOnly = false}) async {
+    this.prompt = prompt;
+    return const HybridAnswer('Line 1: All quiet today.\nLine 2: آج سب ٹھیک رہا۔', AnswerSource.onDevice);
+  }
 }
