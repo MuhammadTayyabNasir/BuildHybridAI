@@ -57,7 +57,7 @@ class _WalletState extends State<Wallet> {
   bool ready = false;
   bool resolving = false;
   String? unknown;
-  final storage = SharedPreferencesAsync();
+  late final storage = SharedPreferencesAsync();
   @override
   void initState() {
     super.initState();
