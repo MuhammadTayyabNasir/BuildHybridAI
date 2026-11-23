@@ -14,7 +14,7 @@ reviews:
   path_instructions:
     - path: "**/*"
       instructions: |
-        This hackathon project is currently in idea refinement.
+        This hackathon project has a Flutter practice flow and experimental AI integrations.
         Distinguish proposed behavior from implemented and tested behavior.
         For application changes, prioritize correct Firebase AI Logic routing,
         sensitive data in outbound requests or logs, validation of AI actions,

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 220" role="img" aria-labelledby="title desc">
+  <title id="title">Saathi mascot</title>
+  <desc id="desc">A friendly ivory robot with a teal face and mint leaf emblem.</desc>
+  <defs>
+    <linearGradient id="shell" x1=".1" y1="0" x2=".9" y2="1"><stop stop-color="#fffdf7"/><stop offset="1" stop-color="#dce8df"/></linearGradient>
+  </defs>
+  <ellipse cx="120" cy="209" rx="77" ry="8" fill="#103D44" opacity=".1"/>
+  <path d="M74 143c-26 0-39 15-39 34 0 12 7 18 17 18 17 0 26-16 32-31M166 143c26 0 39 15 39 34 0 12-7 18-17 18-17 0-26-16-32-31" fill="url(#shell)" stroke="#9EB6AE" stroke-width="3"/>
+  <path d="M77 133h86c14 0 23 11 22 25l-3 27c-2 16-17 27-33 27H91c-16 0-31-11-33-27l-3-27c-1-14 8-25 22-25Z" fill="url(#shell)" stroke="#9EB6AE" stroke-width="3"/>
+  <path d="M120 164c-7 8-15 9-15 17 0 7 7 12 15 12s15-5 15-12c0-8-8-9-15-17Z" fill="#73C8AF"/>
+  <path d="M120 168c-2 9-2 16 0 22" fill="none" stroke="#103D44" stroke-linecap="round" stroke-width="2"/>
+  <path d="M72 29c-16 0-29 13-29 29v57c0 21 17 38 38 38h78c21 0 38-17 38-38V58c0-16-13-29-29-29H72Z" fill="url(#shell)" stroke="#9EB6AE" stroke-width="3"/>
+  <rect x="59" y="48" width="122" height="86" rx="38" fill="#103D44"/>
+  <path d="M77 54h86c7 0 13 3 17 8-19-5-35-4-51 4-19 10-40 9-70-1 4-7 10-11 18-11Z" fill="#3E7F80" opacity=".42"/>
+  <path d="M82 98c5-7 11-7 16 0m44 0c5-7 11-7 16 0" fill="none" stroke="#F8F6EF" stroke-width="7" stroke-linecap="round"/>
+  <path d="M108 117c7 5 17 5 24 0" fill="none" stroke="#B9E7D4" stroke-width="3" stroke-linecap="round"/>
+</svg>
