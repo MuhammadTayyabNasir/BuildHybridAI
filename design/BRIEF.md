@@ -4,7 +4,7 @@
 
 ## Product promise
 
-Help a person find the correct payment reference on a **fictional electricity bill**, enter it in a **simulated** payment flow, understand a mistake, and confirm only after reviewing the details. The assistant explains and points; it never enters or submits a payment for the user. English and reviewed Urdu are the first two languages. The Figma file covers the experience; model routing for Flutter must be proven separately before promising an offline AI mode.
+Help a person find the correct payment reference on a **fictional electricity bill**, enter it in a **simulated** payment flow, understand a mistake, and confirm only after reviewing the details. The assistant explains and points; it never enters or submits a payment for the user. English and Urdu are the first two languages; Urdu copy still needs review by a fluent speaker. The Figma file covers the experience; on-device model routing still needs testing on a supported phone before promising an offline AI mode.
 
 ## Audience and design assumptions
 
@@ -21,7 +21,19 @@ Start with adults who pay household bills in Pakistan, including first-time digi
 | 05 Review | Check every value | Biller, reference, amount, and explicit simulation status |
 | 06 Complete | See the result | Practice completion, no claim of money movement |
 
-The present Figma file is a first-pass flow. The Flutter prototype now implements the six primary screens, reference errors, a reviewed-guide fallback, Urdu RTL, and system dark mode. Add polished generated artwork after it arrives; keep labels and controls editable in Figma. Before the demo, finish the Figma variants for blank/invalid/valid reference, AI unavailable/loading, large text, and dark mode. Camera permission and upload states belong to the later image-import slice. Each state keeps a static help path.
+The present Figma file is a first-pass flow. The Flutter prototype now implements the six primary screens, reference errors, a built-in guide fallback, Urdu RTL, and system dark mode. Add polished generated artwork after it arrives; keep labels and controls editable in Figma. Before the demo, finish the Figma variants for blank/invalid/valid reference, AI unavailable/loading, large text, and dark mode. Camera permission and upload states belong to the later image-import slice. Each state keeps a static help path.
+
+## Visual direction from the supplied references
+
+The five banking images and six short motion clips supplied on 23 November 2026 are mood references, not assets to place in the product. They show three useful patterns: a generous white canvas around a single focal object, expressive but controlled card imagery, and confident hierarchy with large amounts and short labels. The green-card and wallet clips also show how a simple object can enter, rotate, and settle without turning every screen into an animation.
+
+- **Home:** Give the original Saathi mascot or a fictional bill card one clear hero position, with ample quiet space and one dominant action. Use the existing deep teal and mint identity, with a small warm highlight if needed. Keep all headlines and controls as editable text and vectors.
+- **Bill selection:** A layered fictional bill can borrow the depth and gentle tilt of the card references. Keep the provider name, payment reference, and meter number legible; avoid realistic bank card details, payment-network marks, and third-party logos.
+- **Reference and assistant:** Use the restrained white surfaces and strong type hierarchy from the cleaner dashboard references. The reference value and its matching bill label carry the emphasis. The mascot supports a short hint; decorative 3D shapes never sit behind numbers or error text.
+- **Review and completion:** Use a calm summary card and one explicit confirmation action. Completion may have a brief, reduced-motion-aware reveal, but must continue to say that no payment was sent.
+- **Motion:** Limit the hero entrance to a short settle and use small state transitions for selection, loading, and success. Provide a static equivalent when reduced motion is requested. Avoid autoplay loops, flashing, parallax during reading, and saturated neon or red/orange backgrounds on task screens.
+
+Build these as reusable Flutter/Figma parts: `SaathiHero`, `FictionalBillCard`, `ReferenceCallout`, `AmountDisplay`, `GuidancePanel`, and `PracticeResult`. Keep artwork, SVG mark, copy, values, and interaction layers separate. The supplied clips are useful for timing and composition, not for reproducing their brands or card designs.
 
 ## Layout and reusable parts
 
@@ -41,4 +53,4 @@ The present Figma file is a first-pass flow. The Flutter prototype now implement
 
 ## Current implementation constraints
 
-The Flutter Dart AI Logic package provides cloud calls. Android on-device inference is implemented through a native Kotlin bridge using Firebase AI Logic `ONLY_ON_DEVICE`, but it still needs an Android compile and a supported device test before any on-device claim. Use the synthetic bill and local fixtures for the first build. Store no real bank credentials or payment data. The [data map](../docs/ARCHITECTURE.md) records the current persistence choices.
+The Flutter Dart AI Logic package provides cloud calls. Android on-device inference is implemented through a native Kotlin bridge using Firebase AI Logic `ONLY_ON_DEVICE`; the Android build passes, but a supported-device test is still needed before any on-device claim. Use the synthetic bill and local fixtures for the first build. Store no real bank credentials or payment data. The [data map](../docs/ARCHITECTURE.md) records the current persistence choices.
