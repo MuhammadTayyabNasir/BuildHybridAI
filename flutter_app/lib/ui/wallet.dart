@@ -119,6 +119,7 @@ class _WalletState extends State<Wallet> {
 
   @override
   void dispose() {
+    live.dispose();
     input.dispose();
     super.dispose();
   }
@@ -168,9 +169,8 @@ class _WalletState extends State<Wallet> {
     if (target != null) open(target);
   }
 
-  bool urdu = false;
+  final live = LiveVoice();
   String voiceRequest(String words, bool inUrdu, {BuildContext? page}) {
-    urdu = inUrdu;
     final target = resolveRequest(words);
     if (target == null) {
       if (page != null) Navigator.pop(page);
@@ -201,7 +201,7 @@ class _WalletState extends State<Wallet> {
           appBar: AppBar(title: Text(service.title)),
           bottomNavigationBar: SafeArea(
             child: VoiceBar(
-              urdu: urdu,
+              live: live,
               onRequest: (words, language) =>
                   voiceRequest(words, language, page: context),
             ),
@@ -593,7 +593,7 @@ class _WalletState extends State<Wallet> {
                 amount: ready ? balanceText : "—",
                 frozen: frozen,
               ),
-              VoiceBar(urdu: urdu, onRequest: voiceRequest),
+              VoiceBar(live: live, onRequest: voiceRequest),
               const SizedBox(height: 28),
               const Text(
                 'Services',
