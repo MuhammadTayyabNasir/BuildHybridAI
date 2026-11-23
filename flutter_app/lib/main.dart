@@ -8,14 +8,38 @@ import 'package:flutter/services.dart';
 import 'core/coach_service.dart';
 import 'firebase_options.dart';
 import 'ui/bill_saathi_app.dart';
+import 'ui/wallet.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final coach = await _configureCoach().timeout(
+  late final coach = _configureCoach().timeout(
     const Duration(seconds: 15),
     onTimeout: () => const CoachService(),
   );
-  runApp(BillSaathiApp(coach: coach));
+  runApp(
+    MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Saathi Wallet',
+      home: Wallet(
+        interpret: (request) async {
+          final generate = (await coach).cloudTextGenerator;
+          if (generate == null) return null;
+          final result = await generate(
+            'Classify the following wallet navigation request. Return only donations, challans, history, or unknown. Request: $request',
+          ).timeout(const Duration(seconds: 12));
+          for (final service in Service.values) {
+            if (service.name == result?.trim().toLowerCase()) return service;
+          }
+          return null;
+        },
+        practice: (_) => FutureBuilder<CoachService>(
+          future: coach,
+          builder: (_, snapshot) =>
+              BillSaathiApp(coach: snapshot.data ?? const CoachService()),
+        ),
+      ),
+    ),
+  );
 }
 
 Future<CoachService> _configureCoach() async {
