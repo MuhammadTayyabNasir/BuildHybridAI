@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "app.billsaathi.demo"
+    namespace = "com.remoxin4u.remoxin_enterprise"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -18,12 +18,16 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "app.billsaathi.demo"
+        applicationId = "com.remoxin4u.remoxin_enterprise"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 26
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -36,19 +40,6 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
-    }
-}
-
-dependencies {
-    // Firebase AI Logic's experimental on-device Prompt API is Android-only.
-    implementation("com.google.firebase:firebase-ai:18.2.0")
-    implementation("com.google.firebase:firebase-ai-ondevice:16.0.0-beta08")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
 }
 
 flutter {

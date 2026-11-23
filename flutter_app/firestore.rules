@@ -1,0 +1,31 @@
+rules_version = '2';
+
+// Security rules for the 4U Packing Monitor.
+//
+// IMPORTANT: deploy these to the *named* database `remoxindatabase`, NOT the
+// `(default)` database. In the Firebase console, pick the remoxindatabase
+// database before editing rules. With the CLI, bind a firestore target to that
+// database id and deploy to it.
+//
+// `request.auth` is populated by BOTH the Firebase Auth SDK (mobile) and the
+// REST id-token (Windows), so a single signed-in check covers every platform.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    match /users/{id}           { allow read, write: if signedIn(); }
+    match /products/{id}        { allow read, write: if signedIn(); }
+    match /machines/{id}        { allow read, write: if signedIn(); }
+    match /packing_entries/{id} { allow read, write: if signedIn(); }
+    match /temp_humidity/{id}   { allow read, write: if signedIn(); }
+    match /devices/{id}         { allow read, write: if signedIn(); }
+
+    // Deny anything else by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
