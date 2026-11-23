@@ -21,16 +21,17 @@ Future<void> main() async {
       debugShowCheckedModeBanner: false,
       title: 'Saathi Wallet',
       home: Wallet(
-        interpret: (request) async {
-          final generate = (await coach).cloudTextGenerator;
-          if (generate == null) return null;
-          final result = await generate(
-            'Classify the following wallet navigation request. Return only donations, challans, history, or unknown. Request: $request',
-          ).timeout(const Duration(seconds: 12));
-          for (final service in Service.values) {
-            if (service.name == result?.trim().toLowerCase()) return service;
+        publicGuide: (service) async {
+          try {
+            final generate = (await coach).cloudTextGenerator;
+            return await generate
+                ?.call(
+                  'Explain the meaning of ${service.title} in one short sentence for a fictional banking demo. Provide no links or payment instructions.',
+                )
+                .timeout(const Duration(seconds: 12));
+          } catch (_) {
+            return null;
           }
-          return null;
         },
         practice: (_) => FutureBuilder<CoachService>(
           future: coach,
