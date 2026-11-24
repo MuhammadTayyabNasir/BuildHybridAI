@@ -2,7 +2,6 @@ import 'dart:async'; // NEW: Required for TimeoutException
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../core/utils/platform_info.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
@@ -57,14 +56,19 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> login(String username, String password) async {
+    username = AuthService.normalizeUsername(username);
     _state = AuthState.loading;
     _errorMessage = null;
     _isOfflineMode = false;
     notifyListeners();
 
     try {
-      // 5-second timeout prevents the infinite loop!
-      final user = await _authService.login(username, password).timeout(const Duration(seconds: 5));
+      // A cold start has to fetch an App Check token, sign in and read the
+      // profile; on slow factory Wi-Fi 5 s was not enough and fell through to
+      // the offline path. 30 s still stops an endless spinner.
+      final user = await _authService
+          .login(username, password)
+          .timeout(const Duration(seconds: 30));
 
       _user = user;
       _state = AuthState.authenticated;
@@ -81,7 +85,9 @@ class AuthProvider extends ChangeNotifier {
       await prefs.setInt('last_active_time', DateTime.now().millisecondsSinceEpoch);
       notifyListeners();
 
-      if (!_isOfflineMode && !PlatformInfo.isMobile) {
+      // Seeds default products and machines only when the database is empty,
+      // so the first phone to sign in to a fresh project gets a usable app.
+      if (!_isOfflineMode) {
         _firestoreService?.seedInitialData();
       }
       return true;

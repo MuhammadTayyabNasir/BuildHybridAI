@@ -18,7 +18,18 @@ class AuthService {
 
   AuthService(this._local);
 
-  String _emailOf(String username) => '$username$_emailDomain';
+  /// Operators type a short username ("admin"); people who created the
+  /// account in the console often type the full email. Accept both, and
+  /// ignore stray spaces keyboards insert ("admin@ pma.app").
+  static String normalizeUsername(String input) {
+    final clean = input.replaceAll(RegExp(r'\s+'), '').toLowerCase();
+    return clean.endsWith(_emailDomain)
+        ? clean.substring(0, clean.length - _emailDomain.length)
+        : clean;
+  }
+
+  static String _emailOf(String username) =>
+      username.contains('@') ? username : '$username$_emailDomain';
 
   String _hashPassword(String password) {
     final bytes = utf8.encode(password);
@@ -45,8 +56,9 @@ class AuthService {
   static String _authErrorMessage(String code) {
     switch (code) {
       case 'user-not-found':
-      case 'invalid-email':
         return 'Username not found. Check spelling.';
+      case 'invalid-email':
+        return 'That username is not valid. Type just the name, e.g. "admin".';
       case 'wrong-password':
       case 'invalid-credential':
         return 'Wrong username or password.';
@@ -61,7 +73,7 @@ class AuthService {
 
   /// Returns the logged-in [UserModel] or throws with a human-readable message.
   Future<UserModel> login(String username, String password) async {
-    final usernameClean = username.trim().toLowerCase();
+    final usernameClean = normalizeUsername(username);
     final email = _emailOf(usernameClean);
 
     try {
@@ -218,7 +230,7 @@ class AuthService {
     required String role,
   }) async {
     try {
-      final email = _emailOf(username.trim().toLowerCase());
+      final email = _emailOf(normalizeUsername(username));
       final result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -226,7 +238,7 @@ class AuthService {
       final uid = result.user!.uid;
 
       await _db.collection('users').doc(uid).set({
-        'username': username.trim().toLowerCase(),
+        'username': normalizeUsername(username),
         'role': role,
         'createdAt': FieldValue.serverTimestamp(),
       });
