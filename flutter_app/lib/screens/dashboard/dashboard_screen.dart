@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../ui/pma_ui.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
@@ -18,7 +19,6 @@ import '../admin/product_management_screen.dart';
 import '../admin/machine_management_screen.dart';
 import '../admin/bulk_import_screen.dart';
 import '../../services/report_service.dart';
-import '../assistant/assistant_screen.dart';
 import '../settings/settings_screen.dart';
 import '../../widgets/sync_status_badge.dart';
 import '../../widgets/download_report_dialog.dart';
@@ -180,16 +180,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final aspect = R.sectionAspect(context);
 
     return Scaffold(
+      backgroundColor: Pma.canvas,
       appBar: _buildAppBar(context, auth, conn),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'pma-assistant',
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AssistantScreen()),
-        ),
-        icon: const Icon(Icons.mic),
-        label: const Text('Ask PMA'),
-      ),
       body: Column(
         children: [
           const OfflineBanner(),
@@ -203,7 +195,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Welcome, ${auth.user?.username ?? 'QC'}',
+                          'All sections',
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
                                 fontWeight: FontWeight.w700,
@@ -211,7 +203,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                         ),
                         Text(
-                          'Daily Process Monitoring',
+                          'Packing sheets, temperature logs and analytics',
                           style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: isTablet ? 15 : 14,
@@ -271,7 +263,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ConnectivityProvider conn,
   ) {
     return AppBar(
-      titleSpacing: 8,
+      titleSpacing: 12,
+      backgroundColor: Colors.transparent,
+      foregroundColor: Colors.white,
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(gradient: Pma.heroGradient),
+      ),
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -285,14 +282,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.asset(
-                'assets/icon/icon.png',
-                fit: BoxFit.cover,
+                'assets/images/pma_mark.png',
+                fit: BoxFit.contain,
               ),
             ),
           ),
           const SizedBox(width: 10),
           const Flexible(
-            child: Text('PMA', overflow: TextOverflow.ellipsis),
+            child: Text(
+              'Sections',
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
           ),
           if (auth.isOfflineMode)
             Container(

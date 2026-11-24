@@ -34,18 +34,27 @@ async function enableSemantics(page) {
 async function tryClick(locator) {
   if (!(await locator.count())) return false;
   try {
-    await locator.click({ timeout: 5000 });
+    await locator.click({ timeout: 4000 });
     return true;
   } catch {
-    return false;
+    // Flutter's semantics nodes are transparent overlays; a forced click
+    // still lands on the widget underneath.
+    try {
+      await locator.click({ timeout: 4000, force: true });
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 
 async function tapText(page, text) {
-  return (
+  const ok =
     (await tryClick(page.getByRole('button', { name: new RegExp(text, 'i') }).first())) ||
-    (await tryClick(page.getByText(text, { exact: false }).first()))
-  );
+    (await tryClick(page.getByText(text, { exact: false }).first()));
+  // Let the route animation finish and the semantics tree update.
+  if (ok) await wait(1500);
+  return ok;
 }
 
 async function shot(page, size, name) {
@@ -86,17 +95,25 @@ for (const size of sizes) {
     else log.push(`[${size.name}] tab ${label} not found`);
   }
 
+  // Insights: build the on-phone dashboard (no network model needed).
+  if (await tapText(page, 'Insights')) {
+    if (await tapText(page, 'on-phone version')) await shot(page, size, '14-insights-dashboard');
+  }
+
   // Assistant: type a command and a follow-up.
   if (await tapText(page, 'Assistant')) {
-    const box = page.locator('input, textarea, [role=textbox]').first();
+    // Visible text fields only (reCAPTCHA adds a hidden textarea).
+    const box = page.locator('flt-semantics input, flt-semantics textarea').last();
     if (await box.count()) {
-      await box.click();
+      await box.focus();
       await page.keyboard.type('peri peri humidity 45');
       await page.keyboard.press('Enter');
       await shot(page, size, '06-assistant-readback');
+      await page.locator('flt-semantics input, flt-semantics textarea').last().focus();
       await page.keyboard.type('haan');
       await page.keyboard.press('Enter');
       await shot(page, size, '07-assistant-saved');
+      await page.locator('flt-semantics input, flt-semantics textarea').last().focus();
       await page.keyboard.type('aaj meri koi entry miss to nahi hui');
       await page.keyboard.press('Enter');
       await shot(page, size, '08-assistant-missing');
@@ -108,16 +125,27 @@ for (const size of sizes) {
   // Sections tab: open the first section and its sheets.
   if (await tapText(page, 'Sections')) {
     await wait(600);
-    if (await tapText(page, 'Chips')) {
+    // "5 machines" only appears on the Chips card of the Sections tab.
+    if (await tapText(page, '5 machines')) {
       await shot(page, size, '09-section-chips');
-      if (await tapText(page, 'Temp')) await shot(page, size, '10-temp-humidity');
+      if (await tapText(page, 'Temp')) {
+        await shot(page, size, '10-temp-humidity');
+        await page.goBack().catch(() => {});
+        await wait(1200);
+      }
       await page.goBack().catch(() => {});
+      await wait(1200);
+    }
+    if (await tapText(page, 'Settings')) {
+      await shot(page, size, '13-settings');
+      await page.goBack().catch(() => {});
+      await wait(1200);
     }
   }
 
   // Today screen shortcuts (automations, scan).
   if (await tapText(page, 'Today')) {
-    if (await tapText(page, 'utomation')) {
+    if (await tapText(page, 'active rules')) {
       await shot(page, size, '11-automations');
       await page.keyboard.press('Escape');
       await page.goBack().catch(() => {});

@@ -55,6 +55,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
   late final HybridAi _ai;
   late final VoiceIo _voice;
   final _input = TextEditingController();
+  final _inputFocus = FocusNode();
   final _scroll = ScrollController();
   final _turns = <_Turn>[];
   bool _urdu = true;
@@ -160,6 +161,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
     _gemini.dispose();
     _voice.dispose();
     _input.dispose();
+    _inputFocus.dispose();
     _scroll.dispose();
     super.dispose();
   }
@@ -168,6 +170,8 @@ class _AssistantScreenState extends State<AssistantScreen> {
     final t = text.trim();
     if (t.isEmpty || _busy) return;
     _input.clear();
+    // Keep typing without clicking the box again ("haan" after a read-back).
+    _inputFocus.requestFocus();
     setState(() {
       _turns.add(_Turn.user(t));
       _busy = true;
@@ -411,6 +415,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
           else
             _InputBar(
               controller: _input,
+              focusNode: _inputFocus,
               listening: _listening,
               busy: _busy,
               urdu: _urdu,
@@ -556,6 +561,8 @@ class _UserBubble extends StatelessWidget {
     alignment: Alignment.centerRight,
     child: Container(
       margin: const EdgeInsets.only(bottom: 10, left: 48),
+      // Readable line length on desktop.
+      constraints: const BoxConstraints(maxWidth: 560),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         gradient: Pma.heroGradient,
@@ -584,6 +591,7 @@ class _BotBubble extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10, right: 32),
+        constraints: const BoxConstraints(maxWidth: 640),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: dark ? AppColors.cardDark : Colors.white,
@@ -688,6 +696,7 @@ class _ConfirmBar extends StatelessWidget {
 class _InputBar extends StatelessWidget {
   const _InputBar({
     required this.controller,
+    required this.focusNode,
     required this.listening,
     required this.busy,
     required this.urdu,
@@ -695,6 +704,7 @@ class _InputBar extends StatelessWidget {
     required this.onSend,
   });
   final TextEditingController controller;
+  final FocusNode focusNode;
   final bool listening;
   final bool busy;
   final bool urdu;
@@ -711,6 +721,7 @@ class _InputBar extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
+              focusNode: focusNode,
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => onSend(),
               decoration: InputDecoration(
