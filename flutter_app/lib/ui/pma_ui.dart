@@ -33,11 +33,11 @@ class Pma {
   ];
 
   static Color status(String s) => switch (s) {
-        'green' => good,
-        'yellow' => warn,
-        'red' => bad,
-        _ => inkSoft,
-      };
+    'green' => good,
+    'yellow' => warn,
+    'red' => bad,
+    _ => inkSoft,
+  };
 }
 
 /// Rounded gradient header with soft decorative circles.
@@ -49,7 +49,9 @@ class GradientHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.vertical(bottom: Radius.circular(bottomRadius)),
+      borderRadius: BorderRadius.vertical(
+        bottom: Radius.circular(bottomRadius),
+      ),
       child: Container(
         decoration: const BoxDecoration(gradient: Pma.heroGradient),
         child: Stack(
@@ -79,13 +81,13 @@ class _Orb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withValues(alpha: alpha),
-        ),
-      );
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: Colors.white.withValues(alpha: alpha),
+    ),
+  );
 }
 
 /// Small rounded pill showing a change, e.g. "+12%" or "2 missed".
@@ -104,19 +106,30 @@ class TrendPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? (up == null ? Pma.inkSoft : up! ? Pma.good : Pma.bad);
+    final c =
+        color ??
+        (up == null
+            ? Pma.inkSoft
+            : up!
+            ? Pma.good
+            : Pma.bad);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: onDark ? Colors.white.withValues(alpha: 0.22) : c.withValues(alpha: 0.12),
+        color: onDark
+            ? Colors.white.withValues(alpha: 0.22)
+            : c.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (up != null)
-            Icon(up! ? Icons.north_east : Icons.south_east,
-                size: 12, color: onDark ? Colors.white : c),
+            Icon(
+              up! ? Icons.north_east : Icons.south_east,
+              size: 12,
+              color: onDark ? Colors.white : c,
+            ),
           if (up != null) const SizedBox(width: 3),
           Text(
             label,
@@ -164,9 +177,15 @@ class KpiTile extends StatelessWidget {
               const SizedBox(width: 4),
             ],
             Flexible(
-              child: Text(caption,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 12, color: sub, fontWeight: FontWeight.w500)),
+              child: Text(
+                caption,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: sub,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
           ],
         ),
@@ -233,7 +252,11 @@ class PmaCard extends StatelessWidget {
 
 /// Frosted glass panel for content layered over the gradient hero.
 class GlassCard extends StatelessWidget {
-  const GlassCard({super.key, required this.child, this.padding = const EdgeInsets.all(16)});
+  const GlassCard({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(16),
+  });
   final Widget child;
   final EdgeInsets padding;
 
@@ -288,7 +311,11 @@ class PillNavBar extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(40),
             boxShadow: const [
-              BoxShadow(color: Color(0x22000000), blurRadius: 28, offset: Offset(0, 12)),
+              BoxShadow(
+                color: Color(0x22000000),
+                blurRadius: 28,
+                offset: Offset(0, 12),
+              ),
             ],
           ),
           child: Row(
@@ -346,69 +373,90 @@ class PillNavRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 0, 16),
-        child: Container(
-          width: 96,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(40),
-            boxShadow: const [
-              BoxShadow(color: Color(0x18000000), blurRadius: 28, offset: Offset(0, 12)),
-            ],
+    padding: const EdgeInsets.fromLTRB(16, 16, 0, 16),
+    child: Container(
+      width: 96,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(40),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x18000000),
+            blurRadius: 28,
+            offset: Offset(0, 12),
           ),
-          child: Column(
-            children: [
-              const SizedBox(height: 18),
-              Image.asset('assets/images/pma_mark.png', width: 56,
-                  semanticLabel: 'PMA'),
-              const SizedBox(height: 4),
-              const Text('PMA',
-                  style: TextStyle(fontWeight: FontWeight.w900, color: Pma.ink, letterSpacing: 1)),
-              const SizedBox(height: 24),
-              for (var i = 0; i < items.length; i++)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Semantics(
-                    button: true,
-                    selected: i == index,
-                    label: items[i].label,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(24),
-                      onTap: () => onTap(i),
-                      child: SizedBox(
-                        width: 80,
-                        child: Column(
-                          children: [
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 220),
-                              width: 50,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: i == index ? Pma.ink : Colors.transparent,
-                              ),
-                              child: Icon(items[i].icon,
-                                  color: i == index ? Colors.white : Pma.inkSoft),
+        ],
+      ),
+      // Scrolls in short windows so every item stays reachable.
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 18),
+            Image.asset(
+              'assets/images/pma_mark.png',
+              width: 56,
+              semanticLabel: 'PMA',
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'PMA',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: Pma.ink,
+                letterSpacing: 1,
+              ),
+            ),
+            const SizedBox(height: 24),
+            for (var i = 0; i < items.length; i++)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Semantics(
+                  button: true,
+                  selected: i == index,
+                  label: items[i].label,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () => onTap(i),
+                    child: SizedBox(
+                      width: 80,
+                      child: Column(
+                        children: [
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 220),
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: i == index ? Pma.ink : Colors.transparent,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              items[i].label,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: i == index ? FontWeight.w800 : FontWeight.w500,
-                                color: i == index ? Pma.ink : Pma.inkSoft,
-                              ),
+                            child: Icon(
+                              items[i].icon,
+                              color: i == index ? Colors.white : Pma.inkSoft,
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            items[i].label,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: i == index
+                                  ? FontWeight.w800
+                                  : FontWeight.w500,
+                              color: i == index ? Pma.ink : Pma.inkSoft,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
-            ],
-          ),
+              ),
+            const SizedBox(height: 12),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 }
 
 /// Keeps pages readable on big screens: content is centered and capped at
@@ -420,14 +468,14 @@ class PmaFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ColoredBox(
-        color: Pma.canvas,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxWidth),
-            child: child,
-          ),
-        ),
-      );
+    color: Pma.canvas,
+    child: Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: child,
+      ),
+    ),
+  );
 }
 
 /// Smooth area chart with a dark tooltip bubble.
@@ -466,9 +514,15 @@ class AreaTrendChart extends StatelessWidget {
           gridData: const FlGridData(show: false),
           borderData: FlBorderData(show: false),
           titlesData: FlTitlesData(
-            leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            leftTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
@@ -476,11 +530,15 @@ class AreaTrendChart extends StatelessWidget {
                 interval: 1,
                 getTitlesWidget: (v, meta) {
                   final i = v.toInt();
-                  if (i < 0 || i >= labels.length) return const SizedBox.shrink();
+                  if (i < 0 || i >= labels.length) {
+                    return const SizedBox.shrink();
+                  }
                   return Padding(
                     padding: const EdgeInsets.only(top: 6),
-                    child: Text(labels[i],
-                        style: const TextStyle(fontSize: 10, color: Pma.inkSoft)),
+                    child: Text(
+                      labels[i],
+                      style: const TextStyle(fontSize: 10, color: Pma.inkSoft),
+                    ),
                   );
                 },
               ),
@@ -491,17 +549,23 @@ class AreaTrendChart extends StatelessWidget {
               getTooltipColor: (_) => Pma.ink,
               tooltipRoundedRadius: 12,
               getTooltipItems: (spots) => spots
-                  .map((s) => LineTooltipItem(
-                        '${s.y.toStringAsFixed(s.y % 1 == 0 ? 0 : 1)}$unit',
-                        const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-                      ))
+                  .map(
+                    (s) => LineTooltipItem(
+                      '${s.y.toStringAsFixed(s.y % 1 == 0 ? 0 : 1)}$unit',
+                      const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  )
                   .toList(),
             ),
           ),
           lineBarsData: [
             LineChartBarData(
               spots: [
-                for (var i = 0; i < values.length; i++) FlSpot(i.toDouble(), values[i]),
+                for (var i = 0; i < values.length; i++)
+                  FlSpot(i.toDouble(), values[i]),
               ],
               isCurved: true,
               curveSmoothness: 0.3,
@@ -522,7 +586,10 @@ class AreaTrendChart extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [color.withValues(alpha: 0.35), color.withValues(alpha: 0.0)],
+                  colors: [
+                    color.withValues(alpha: 0.35),
+                    color.withValues(alpha: 0.0),
+                  ],
                 ),
               ),
             ),
@@ -562,20 +629,30 @@ class RoundedBarChart extends StatelessWidget {
           gridData: const FlGridData(show: false),
           borderData: FlBorderData(show: false),
           titlesData: FlTitlesData(
-            leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            leftTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 22,
                 getTitlesWidget: (v, meta) {
                   final i = v.toInt();
-                  if (i < 0 || i >= labels.length) return const SizedBox.shrink();
+                  if (i < 0 || i >= labels.length) {
+                    return const SizedBox.shrink();
+                  }
                   return Padding(
                     padding: const EdgeInsets.only(top: 6),
-                    child: Text(labels[i],
-                        style: const TextStyle(fontSize: 10, color: Pma.inkSoft)),
+                    child: Text(
+                      labels[i],
+                      style: const TextStyle(fontSize: 10, color: Pma.inkSoft),
+                    ),
                   );
                 },
               ),
@@ -587,27 +664,33 @@ class RoundedBarChart extends StatelessWidget {
               tooltipRoundedRadius: 12,
               getTooltipItem: (g, gi, rod, ri) => BarTooltipItem(
                 '${rod.toY.toStringAsFixed(rod.toY % 1 == 0 ? 0 : 1)}$unit',
-                const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
           barGroups: [
             for (var i = 0; i < values.length; i++)
-              BarChartGroupData(x: i, barRods: [
-                BarChartRodData(
-                  toY: values[i],
-                  width: 22,
-                  borderRadius: BorderRadius.circular(10),
-                  gradient: i == hi
-                      ? const LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                          colors: [Pma.ember, Pma.sun],
-                        )
-                      : null,
-                  color: i == hi ? null : const Color(0xFFF1E6E1),
-                ),
-              ]),
+              BarChartGroupData(
+                x: i,
+                barRods: [
+                  BarChartRodData(
+                    toY: values[i],
+                    width: 22,
+                    borderRadius: BorderRadius.circular(10),
+                    gradient: i == hi
+                        ? const LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [Pma.ember, Pma.sun],
+                          )
+                        : null,
+                    color: i == hi ? null : const Color(0xFFF1E6E1),
+                  ),
+                ],
+              ),
           ],
         ),
       ),

@@ -18,6 +18,10 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
 
+  /// Keeps the pages (and an open assistant conversation) alive when the
+  /// window crosses the phone/desktop breakpoint.
+  final _stackKey = GlobalKey();
+
   static const _items = [
     PillNavItem(Icons.home_rounded, 'Today'),
     PillNavItem(Icons.mic_rounded, 'Assistant'),
@@ -44,7 +48,11 @@ class _HomeShellState extends State<HomeShell> {
             Expanded(
               child: PmaFrame(
                 maxWidth: 1180,
-                child: IndexedStack(index: _index, children: pages),
+                child: IndexedStack(
+                  key: _stackKey,
+                  index: _index,
+                  children: pages,
+                ),
               ),
             ),
           ],
@@ -53,7 +61,7 @@ class _HomeShellState extends State<HomeShell> {
     }
     return Scaffold(
       backgroundColor: Pma.canvas,
-      body: IndexedStack(index: _index, children: pages),
+      body: IndexedStack(key: _stackKey, index: _index, children: pages),
       bottomNavigationBar: PillNavBar(items: _items, index: _index, onTap: go),
     );
   }

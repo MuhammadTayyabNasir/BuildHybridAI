@@ -28,7 +28,10 @@ class LiveAudio {
     }
   }
 
-  Future<void> startMic(void Function(Uint8List chunk) onChunk) async {
+  Future<void> startMic(
+    void Function(Uint8List chunk) onChunk, {
+    void Function(Object error)? onError,
+  }) async {
     await stopMic();
     final recorder = AudioRecorder();
     _recorder = recorder;
@@ -44,7 +47,10 @@ class LiveAudio {
     ));
     _micSub = stream.listen((d) {
       if (d.isNotEmpty) onChunk(d);
-    }, onError: (Object e) => debugPrint('Live mic error: $e'));
+    }, onError: (Object e) {
+      debugPrint('Live mic error: $e');
+      onError?.call(e);
+    });
   }
 
   Future<void> stopMic() async {
@@ -60,11 +66,16 @@ class LiveAudio {
     }
   }
 
-  Future<void> _ensurePlayer() async {
+  /// Bumped by [stopPlayback]; a chunk whose player set-up started before a
+  /// stop is dropped instead of opening a new stream after it.
+  int _playGen = 0;
+
+  Future<bool> _ensurePlayer(int gen) async {
     if (!SoLoud.instance.isInitialized) {
       await SoLoud.instance.init(sampleRate: outputRate, channels: Channels.mono);
     }
-    if (_stream != null) return;
+    if (gen != _playGen) return false;
+    if (_stream != null) return true;
     _stream = SoLoud.instance.setBufferStream(
       bufferingType: BufferingType.released,
       bufferingTimeNeeds: 0,
@@ -73,11 +84,12 @@ class LiveAudio {
       format: BufferType.s16le,
     );
     _handle = SoLoud.instance.play(_stream!);
+    return true;
   }
 
   /// Queues one streamed chunk of the model's voice.
   Future<void> play(Uint8List pcm) async {
-    await _ensurePlayer();
+    if (!await _ensurePlayer(_playGen)) return;
     final s = _stream;
     if (s != null) SoLoud.instance.addAudioDataStream(s, pcm);
   }
@@ -85,6 +97,7 @@ class LiveAudio {
   /// Drops whatever is still queued, e.g. when the operator talks over the
   /// model (barge-in) or the session ends.
   Future<void> stopPlayback() async {
+    _playGen++;
     final s = _stream;
     final h = _handle;
     _stream = null;

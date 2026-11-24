@@ -32,6 +32,9 @@ class TestDataService {
     int days = 60,
     int maxPerDayPerSection = 4,
     void Function(int done, int total)? onProgress,
+    /// Where generated entries go. Defaults to the entries provider (which
+    /// also uploads); demo mode passes a local-only sink.
+    Future<void> Function(List<PackingEntryModel> slice)? sink,
   }) async {
     final products = _local.getProducts();
     final machines = _local.getMachines();
@@ -63,7 +66,11 @@ class TestDataService {
     const chunk = 40;
     for (var i = 0; i < batch.length; i += chunk) {
       final slice = batch.sublist(i, min(i + chunk, batch.length));
-      await _entries.addEntries(slice); // local-first; uploads in background
+      if (sink != null) {
+        await sink(slice);
+      } else {
+        await _entries.addEntries(slice); // local-first; uploads in background
+      }
       done += slice.length;
       onProgress?.call(done, total);
       await Future.delayed(const Duration(milliseconds: 25)); // throttle uploads

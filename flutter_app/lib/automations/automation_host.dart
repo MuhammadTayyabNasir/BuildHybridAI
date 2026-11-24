@@ -79,8 +79,16 @@ class _AutomationHostState extends State<AutomationHost> with WidgetsBindingObse
   void _show(AutomationEvent e) {
     if (!mounted) return;
     final messenger = ScaffoldMessenger.maybeOf(context);
+    final w = MediaQuery.sizeOf(context).width;
+    // Float above the pill bar on phones; a compact card bottom-right on
+    // desktops instead of a full-width red strip.
+    final side = w >= pmaWideBreakpoint ? w - 460 : 16.0;
+    messenger?.hideCurrentSnackBar();
     messenger?.showSnackBar(SnackBar(
       behavior: SnackBarBehavior.floating,
+      margin: EdgeInsets.fromLTRB(side, 0, 16, w >= pmaWideBreakpoint ? 24 : 96),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      showCloseIcon: true,
       backgroundColor: switch (e.severity) {
         'critical' => Pma.bad,
         'warning' => Pma.ember,

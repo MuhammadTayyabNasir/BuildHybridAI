@@ -27,11 +27,39 @@ class DemoData {
     createdAt: DateTime(2026, 11, 1),
   );
 
+  static const _seededKey = 'pma_demo_seeded';
+
+  /// The demo is only offered where nobody has signed in on this device, so
+  /// a no-login admin session can never see real factory data kept offline.
+  static bool canStart(LocalStorageService local) {
+    if (local.getAuthCache() != null) return false;
+    if (local.getMeta(_seededKey) == '1') return true;
+    return local.getEntries().isEmpty && local.getTempHumidityReports().isEmpty;
+  }
+
+  /// Removes everything the demo created; run before a real sign-in.
+  static Future<void> clear(LocalStorageService local) async {
+    if (local.getMeta(_seededKey) != '1') return;
+    for (final e in local.getEntries().where((e) => e.id.startsWith('demo-'))) {
+      await local.deleteEntry(e.id);
+    }
+    for (final r in local.getTempHumidityReports().where((r) => r.id.startsWith('demo-'))) {
+      await local.deleteTempHumidityReport(r.id);
+    }
+    if (local.getProducts().every((p) => p.id.startsWith('demo-'))) {
+      await local.clearProductsCache();
+    }
+    if (local.getMachines().every((m) => m.id.startsWith('demo-'))) {
+      await local.clearMachinesCache();
+    }
+    await local.setMeta(_seededKey, '0');
+  }
+
   /// Seeds once: catalogue, 3 weeks of packing checks and twice-daily
   /// temperature / humidity readings, leaving today's evening reading open so
   /// "missed entries" has something to find.
   Future<void> ensureSeeded() async {
-    if (_local.getMeta('pma_demo_seeded') == '1') return;
+    if (_local.getMeta(_seededKey) == '1') return;
 
     if (_local.getProducts().isEmpty) {
       var i = 0;
@@ -47,9 +75,19 @@ class DemoData {
           MachineModel.fromMap(m.toMap(), 'demo-m${i++}'),
       ]);
     }
-    await TestDataService(_entries, _local).seed(days: 21, maxPerDayPerSection: 3);
+    // Straight into local storage, marked synced: demo rows never upload.
+    var n = 0;
+    await TestDataService(_entries, _local).seed(
+      days: 21,
+      maxPerDayPerSection: 3,
+      sink: (slice) async {
+        for (final e in slice) {
+          await _local.saveEntry(e.copyWith(id: 'demo-e${n++}', isSynced: true));
+        }
+      },
+    );
     await _seedReadings(days: 21);
-    await _local.setMeta('pma_demo_seeded', '1');
+    await _local.setMeta(_seededKey, '1');
   }
 
   Future<void> _seedReadings({required int days}) async {

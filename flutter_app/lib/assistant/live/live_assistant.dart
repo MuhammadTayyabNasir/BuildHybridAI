@@ -51,6 +51,18 @@ class LiveAssistant extends ChangeNotifier {
   LiveSession? _session;
   StreamSubscription<LiveServerResponse>? _sub;
 
+  /// Bumped on every start/stop; async work from an older session checks it
+  /// and backs out, so a late connect or timer cannot revive a stopped one.
+  int _generation = 0;
+  bool _disposed = false;
+  Timer? _navTimer;
+
+  /// Counts the operator's spoken turns. A question the app asked (pending)
+  /// may only be answered after the operator has spoken again, so the model
+  /// cannot ask and answer "haan" for them in one turn.
+  int _operatorTurns = 0;
+  int? _pendingAtTurn;
+
   LiveState state = LiveState.idle;
   String? error;
   final lines = <LiveLine>[];
@@ -80,11 +92,15 @@ saved=true. If the tool asks a question (pending=true), ask it and wait. Do not
 invent numbers, products or machines. Small talk and greetings need no tool.''';
 
   Future<void> start() async {
-    if (active) return;
+    if (active || _disposed) return;
+    final gen = ++_generation;
+    bool stale() => _disposed || gen != _generation;
     _set(LiveState.connecting);
     error = null;
     try {
-      if (!await _audio.hasMicPermission()) {
+      final allowed = await _audio.hasMicPermission();
+      if (stale()) return;
+      if (!allowed) {
         throw StateError('Microphone permission is needed for live voice.');
       }
       final model = FirebaseAI.googleAI().liveGenerativeModel(
@@ -113,30 +129,52 @@ invent numbers, products or machines. Small talk and greetings need no tool.''';
         ],
       );
       final session = await model.connect().timeout(const Duration(seconds: 15));
+      if (stale()) {
+        // Stopped while connecting: close the late connection, do not use it.
+        unawaited(session.close().catchError((_) {}));
+        return;
+      }
       _session = session;
+      _operatorTurns = 0;
+      _pendingAtTurn = null;
       _sub = session.receive().listen(
-            _onMessage,
-            onError: (Object e) => _fail('Live connection error: $e'),
+            (r) => _onMessage(r).catchError(
+              (Object e) => _failIf(gen, 'Live voice stopped: $e'),
+            ),
+            onError: (Object e) => _failIf(gen, 'Live connection error: $e'),
             onDone: () {
-              if (active) _fail('The live connection closed.');
+              if (gen == _generation && active) _fail('The live connection closed.');
             },
           );
-      await _audio.startMic((chunk) {
-        _session?.sendAudioRealtime(InlineDataPart(LiveAudio.inputMime, chunk));
-      });
+      await _audio.startMic(
+        (chunk) => _session?.sendAudioRealtime(InlineDataPart(LiveAudio.inputMime, chunk)),
+        onError: (e) => _failIf(gen, 'Microphone stopped: $e'),
+      );
+      if (stale()) {
+        await _teardown();
+        return;
+      }
       _set(LiveState.listening);
     } catch (e) {
+      if (stale()) return;
       await _teardown();
       _fail(e is StateError ? e.message : 'Could not start live voice: $e');
     }
   }
 
   Future<void> stop() async {
+    _generation++;
     await _teardown();
-    _set(LiveState.idle);
+    if (!_disposed) _set(LiveState.idle);
+  }
+
+  void _failIf(int gen, String message) {
+    if (gen == _generation && !_disposed) _fail(message);
   }
 
   Future<void> _teardown() async {
+    _navTimer?.cancel();
+    _navTimer = null;
     final session = _session;
     _session = null;
     await _sub?.cancel();
@@ -153,12 +191,14 @@ invent numbers, products or machines. Small talk and greetings need no tool.''';
 
   void _fail(String message) {
     debugPrint('PMA live: $message');
+    _generation++;
     error = message;
     unawaited(_teardown());
     _set(LiveState.error);
   }
 
   void _set(LiveState s) {
+    if (_disposed) return;
     state = s;
     notifyListeners();
   }
@@ -178,6 +218,9 @@ invent numbers, products or machines. Small talk and greetings need no tool.''';
           if (state != LiveState.speaking) _set(LiveState.speaking);
           await _audio.play(part.bytes);
         }
+      }
+      if ((m.inputTranscription?.text ?? '').trim().isNotEmpty && _userLine == null) {
+        _operatorTurns++;
       }
       _userLine = _append(_userLine, m.inputTranscription, fromUser: true);
       _modelLine = _append(_modelLine, m.outputTranscription, fromUser: false);
@@ -210,7 +253,7 @@ invent numbers, products or machines. Small talk and greetings need no tool.''';
       l.finished = true;
       l = null;
     }
-    notifyListeners();
+    if (!_disposed) notifyListeners();
     return l;
   }
 
@@ -223,7 +266,20 @@ invent numbers, products or machines. Small talk and greetings need no tool.''';
         continue;
       }
       final command = '${fc.args['command'] ?? ''}'.trim();
+      if (service.pending != null && _pendingAtTurn == _operatorTurns) {
+        // The app's question has not been answered by the operator yet.
+        responses.add(FunctionResponse(
+          fc.name,
+          {
+            'error': 'The app asked the operator a question. Ask it, then wait '
+                'for the operator to answer out loud before calling pma again.',
+          },
+          id: fc.id,
+        ));
+        continue;
+      }
       final reply = await service.handle(command);
+      _pendingAtTurn = reply.pending != null ? _operatorTurns : null;
       onReply?.call(reply);
       navigate ??= reply.navigate;
       responses.add(FunctionResponse(
@@ -242,7 +298,10 @@ invent numbers, products or machines. Small talk and greetings need no tool.''';
     if (navigate != null) {
       // Let the model say where it is going, then leave this screen.
       final target = navigate;
-      Future<void>.delayed(const Duration(seconds: 3), () async {
+      final gen = _generation;
+      _navTimer?.cancel();
+      _navTimer = Timer(const Duration(seconds: 3), () async {
+        if (gen != _generation || _disposed) return;
         await stop();
         onNavigate?.call(target);
       });
@@ -251,6 +310,8 @@ invent numbers, products or machines. Small talk and greetings need no tool.''';
 
   @override
   void dispose() {
+    _disposed = true;
+    _generation++;
     unawaited(_teardown());
     super.dispose();
   }

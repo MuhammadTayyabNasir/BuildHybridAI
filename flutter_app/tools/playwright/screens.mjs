@@ -30,18 +30,22 @@ async function enableSemantics(page) {
   await wait(800);
 }
 
+// True only when a click actually landed.
+async function tryClick(locator) {
+  if (!(await locator.count())) return false;
+  try {
+    await locator.click({ timeout: 5000 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function tapText(page, text) {
-  const el = page.getByText(text, { exact: false }).first();
-  if (await el.count()) {
-    await el.click({ timeout: 5000 }).catch(() => {});
-    return true;
-  }
-  const byRole = page.getByRole('button', { name: new RegExp(text, 'i') }).first();
-  if (await byRole.count()) {
-    await byRole.click({ timeout: 5000 }).catch(() => {});
-    return true;
-  }
-  return false;
+  return (
+    (await tryClick(page.getByRole('button', { name: new RegExp(text, 'i') }).first())) ||
+    (await tryClick(page.getByText(text, { exact: false }).first()))
+  );
 }
 
 async function shot(page, size, name) {
@@ -84,7 +88,7 @@ for (const size of sizes) {
 
   // Assistant: type a command and a follow-up.
   if (await tapText(page, 'Assistant')) {
-    const box = page.getByRole('textbox').first();
+    const box = page.locator('input, textarea, [role=textbox]').first();
     if (await box.count()) {
       await box.click();
       await page.keyboard.type('peri peri humidity 45');

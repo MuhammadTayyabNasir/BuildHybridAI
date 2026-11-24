@@ -30,6 +30,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
+    // A real sign-in never sees demo rows left on this device.
+    await DemoData.clear(context.read<LocalStorageService>());
+    if (!mounted) return;
     await context.read<AuthProvider>().login(
       _usernameCtrl.text.trim(),
       _passwordCtrl.text,
@@ -69,6 +72,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _demo() async {
+    final local = context.read<LocalStorageService>();
+    if (!DemoData.canStart(local)) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('The demo is available on a device or browser where nobody has signed in.'),
+      ));
+      return;
+    }
     final demo = DemoData(
       context.read<LocalStorageService>(),
       context.read<FirestoreService>(),

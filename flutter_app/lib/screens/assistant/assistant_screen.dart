@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -111,7 +112,10 @@ class _AssistantScreenState extends State<AssistantScreen> {
       },
     )..addListener(_onLiveChanged);
     _voice.warmUp().then((_) {
-      if (!mounted || _voice.urduVoice) return;
+      if (!mounted || _voice.urduVoice || kIsWeb) return;
+      final local = context.read<LocalStorageService>();
+      if (local.getMeta('pma_urdu_voice_tip') == '1') return;
+      local.setMeta('pma_urdu_voice_tip', '1');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           duration: Duration(seconds: 8),
@@ -142,6 +146,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
       await _gemini.stop();
       return;
     }
+    if (_busy) return;
     _live = false;
     await _voice.stopListening();
     await _voice.stopSpeaking();
@@ -352,7 +357,9 @@ class _AssistantScreenState extends State<AssistantScreen> {
         actions: [
           _LiveButton(
             active: _gemini.active,
-            enabled: online,
+            // Not while a typed/spoken request is still being handled: both
+            // paths share one assistant and its pending question.
+            enabled: online && !_busy,
             onTap: _toggleGemini,
           ),
           _LangSwitch(urdu: _urdu, onChanged: (v) => setState(() => _urdu = v)),
