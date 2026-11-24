@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/sections.dart';
 import '../../../../models/packing_entry_model.dart';
 import '../entry_detail_screen.dart';
+import '../../../ui/pma_ui.dart';
 
 class DrillDownScreen extends StatelessWidget {
   final String title;
@@ -19,11 +20,8 @@ class DrillDownScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = AppColors.sectionColor(section.id);
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: color,
-        foregroundColor: Colors.white,
+      appBar: PmaAppBar(
         title: Text(title, overflow: TextOverflow.ellipsis),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(22),

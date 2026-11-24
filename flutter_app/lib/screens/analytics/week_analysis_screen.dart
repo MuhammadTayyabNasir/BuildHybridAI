@@ -7,6 +7,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/sections.dart';
 import '../../models/packing_entry_model.dart';
 import '../../providers/entries_provider.dart';
+import '../../ui/pma_ui.dart';
 
 /// "Week Analysis" (Weak Link) — side-by-side multi-week comparison mirroring
 /// the QC weekly deck: for each metric, Yellow %/Red % defect rates per ISO
@@ -114,7 +115,7 @@ class _WeekAnalysisScreenState extends State<WeekAnalysisScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: PmaAppBar(
         title: const Text('Week Analysis · Weak Link'),
         actions: [
           IconButton(

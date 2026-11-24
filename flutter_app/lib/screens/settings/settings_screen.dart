@@ -23,6 +23,7 @@ import 'widgets/report_card.dart';
 import 'widgets/custom_column_dialog.dart';
 import 'widgets/th_threshold_tile.dart';
 import '../../../services/settings_service.dart';
+import '../../ui/pma_ui.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -138,7 +139,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (isViewer) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Settings')),
+        appBar: PmaAppBar(title: const Text('Settings')),
         body: const Center(
           child: Text(
             'Access Denied. Admins only.',
@@ -153,7 +154,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: PmaAppBar(title: const Text('Settings')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(

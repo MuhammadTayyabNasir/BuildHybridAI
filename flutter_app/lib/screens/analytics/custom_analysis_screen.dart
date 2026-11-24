@@ -7,6 +7,7 @@ import '../../models/custom_column_model.dart';
 import '../../models/packing_entry_model.dart';
 import '../../providers/entries_provider.dart';
 import '../sections/entry_detail_screen.dart';
+import '../../ui/pma_ui.dart';
 
 // ── Helpers (shared, top-level) ───────────────────────────────────────────────
 bool _isFail(PackingEntryModel e) =>
@@ -160,7 +161,7 @@ class _CustomAnalysisScreenState extends State<CustomAnalysisScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: PmaAppBar(
         title: const Text('Custom Analysis'),
         actions: [
           IconButton(
@@ -411,7 +412,7 @@ class _CustomDrillScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: PmaAppBar(
         title: Text(title, overflow: TextOverflow.ellipsis),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(22),

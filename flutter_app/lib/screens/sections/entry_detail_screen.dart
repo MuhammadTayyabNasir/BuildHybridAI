@@ -7,6 +7,7 @@ import '../../models/packing_entry_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/status_chip.dart';
 import 'entry_form_screen.dart';
+import '../../ui/pma_ui.dart';
 
 class EntryDetailScreen extends StatelessWidget {
   final PackingEntryModel entry;
@@ -23,8 +24,7 @@ class EntryDetailScreen extends StatelessWidget {
     final color = AppColors.sectionColor(section.id);
     final auth = context.read<AuthProvider>();
     return Scaffold(
-      appBar: AppBar(foregroundColor: Colors.white, 
-        backgroundColor: color,
+      appBar: PmaAppBar(
         title: Text('Entry Detail — ${section.name}'),
         actions: [
           if (auth.user?.isViewer != true)

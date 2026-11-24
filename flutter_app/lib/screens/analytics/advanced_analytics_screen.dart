@@ -12,6 +12,7 @@ import 'custom_analysis_screen.dart';
 import 'week_analysis_screen.dart';
 import 'models/advanced_helpers.dart';
 import 'widgets/advanced_components.dart';
+import '../../ui/pma_ui.dart';
 
 class AdvancedAnalyticsScreen extends StatefulWidget {
   final bool embedded;
@@ -166,7 +167,7 @@ class _AdvancedAnalyticsScreenState extends State<AdvancedAnalyticsScreen>
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: PmaAppBar(
         title: const Text('Analytics'),
         bottom: tabBar,
         actions: [

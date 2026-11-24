@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/sections.dart';
 import '../../models/product_model.dart';
 import '../../providers/products_provider.dart';
+import '../../ui/pma_ui.dart';
 
 class ProductManagementScreen extends StatefulWidget {
   const ProductManagementScreen({super.key});
@@ -37,14 +38,11 @@ class _ProductManagementScreenState extends State<ProductManagementScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: PmaAppBar(
         title: const Text('Manage Products'),
         bottom: TabBar(
           controller: _tabs,
           isScrollable: true,
-          indicatorColor: AppColors.primary,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
           tabs: Sections.all.map((s) => Tab(text: s.name)).toList(),
         ),
       ),

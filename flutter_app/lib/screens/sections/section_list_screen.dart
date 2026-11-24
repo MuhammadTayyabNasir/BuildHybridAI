@@ -18,6 +18,7 @@ import 'entry_detail_screen.dart';
 import 'excel_entry/excel_entry_screen.dart'; // Updated path if you moved it
 import 'analytics/section_analytics_screen.dart';
 import 'widgets/entry_row.dart';
+import '../../ui/pma_ui.dart';
 
 class SectionListScreen extends StatefulWidget {
   final SectionInfo section;
@@ -359,8 +360,7 @@ class _SectionListScreenState extends State<SectionListScreen> {
 
     if (auth.user?.isViewer != true) {
       return Scaffold(
-        appBar: AppBar(foregroundColor: Colors.white, 
-          backgroundColor: color,
+        appBar: PmaAppBar(
           title: Text(widget.section.name),
           actions: [
             IconButton(
@@ -384,8 +384,7 @@ class _SectionListScreenState extends State<SectionListScreen> {
       );
     } else {
       return Scaffold(
-        appBar: AppBar(foregroundColor: Colors.white, 
-          backgroundColor: color,
+        appBar: PmaAppBar(
           title: Text(widget.section.name),
           actions: [
             IconButton(

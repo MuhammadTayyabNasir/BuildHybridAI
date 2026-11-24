@@ -333,6 +333,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         PopupMenuButton<String>(
           icon: const Icon(Icons.admin_panel_settings),
+          tooltip: 'Admin tools',
           onSelected: (val) => _onAdminMenu(context, val),
           itemBuilder: (_) => [
             if (auth.isAdmin)

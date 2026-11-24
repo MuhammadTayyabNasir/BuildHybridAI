@@ -17,6 +17,7 @@ import '../../providers/products_provider.dart';
 // Modular UI imports
 import 'excel_entry/widgets/product_picker_dialog.dart';
 import 'widgets/entry_form_components.dart';
+import '../../ui/pma_ui.dart';
 
 class EntryFormScreen extends StatefulWidget {
   final SectionInfo section;
@@ -313,8 +314,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
         if (discard == true && context.mounted) Navigator.of(context).pop();
       },
       child: Scaffold(
-        appBar: AppBar(foregroundColor: Colors.white, 
-          backgroundColor: color,
+        appBar: PmaAppBar(
           title: Text(isEdit ? 'Edit Entry' : 'New Entry — ${widget.section.name}'),
           actions: [
             TextButton(

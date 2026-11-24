@@ -12,6 +12,7 @@ import '../../../../services/th_threshold_service.dart';
 import '../../../../widgets/offline_banner.dart';
 
 import 'controllers/th_row_controller.dart';
+import '../../../ui/pma_ui.dart';
 
 class TempHumidityFormScreen extends StatefulWidget {
   final SectionInfo section;
@@ -201,8 +202,7 @@ class _TempHumidityFormScreenState extends State<TempHumidityFormScreen> {
             if (discard == true && context.mounted) Navigator.of(context).pop();
           },
           child: Scaffold(
-            appBar: AppBar(foregroundColor: Colors.white, 
-              backgroundColor: color,
+            appBar: PmaAppBar(
               title: Text('${widget.section.name} — T&H Report'),
               actions: [
                 if (isEdit)

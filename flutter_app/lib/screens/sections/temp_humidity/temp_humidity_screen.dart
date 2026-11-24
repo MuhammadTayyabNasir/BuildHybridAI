@@ -13,6 +13,7 @@ import '../../../../widgets/offline_banner.dart';
 import 'temp_humidity_excel_screen.dart';
 import 'temp_humidity_form_screen.dart';
 import 'widgets/th_report_row.dart';
+import '../../../ui/pma_ui.dart';
 
 class TempHumidityScreen extends StatefulWidget {
   final SectionInfo section;
@@ -112,8 +113,7 @@ class _TempHumidityScreenState extends State<TempHumidityScreen> {
 
     if (auth.user?.isViewer != true) {
       return Scaffold(
-        appBar: AppBar(foregroundColor: Colors.white, 
-          backgroundColor: color,
+        appBar: PmaAppBar(
           title: Text('Temp & Humidity — ${widget.section.name}'),
           actions: [
             IconButton(icon: const Icon(Icons.refresh), onPressed: _load, tooltip: 'Refresh'),
@@ -124,8 +124,7 @@ class _TempHumidityScreenState extends State<TempHumidityScreen> {
       );
     } else {
       return Scaffold(
-        appBar: AppBar(foregroundColor: Colors.white, 
-          backgroundColor: color,
+        appBar: PmaAppBar(
           title: Text('Temp & Humidity — ${widget.section.name}'),
           actions: [
             IconButton(icon: const Icon(Icons.refresh), onPressed: _load, tooltip: 'Refresh'),

@@ -11,6 +11,7 @@ import '../../../../providers/entries_provider.dart';
 import 'drill_down_screen.dart';
 import 'models/analytics_helpers.dart';
 import 'widgets/section_card_shell.dart';
+import '../../../ui/pma_ui.dart';
 
 enum AnalyticsPeriod { daily, weekly, monthly, custom }
 
@@ -113,9 +114,7 @@ class _SectionAnalyticsScreenState extends State<SectionAnalyticsScreen> {
   Widget build(BuildContext context) {
     final color = AppColors.sectionColor(widget.section.id);
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: color,
-        foregroundColor: Colors.white,
+      appBar: PmaAppBar(
         title: Text('${widget.section.name} Analytics'),
         actions: [
           IconButton(

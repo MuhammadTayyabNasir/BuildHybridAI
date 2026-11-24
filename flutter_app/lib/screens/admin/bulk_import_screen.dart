@@ -12,6 +12,7 @@ import '../../models/packing_entry_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/entries_provider.dart';
 import '../../services/local_storage_service.dart';
+import '../../ui/pma_ui.dart';
 
 class BulkImportScreen extends StatefulWidget {
   const BulkImportScreen({super.key});
@@ -27,7 +28,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Bulk Import Entries')),
+      appBar: PmaAppBar(title: const Text('Bulk Import Entries')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(

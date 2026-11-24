@@ -139,6 +139,8 @@ for (const size of sizes) {
     }
     if (opened) {
       await shot(page, size, '09-section-chips');
+      // Close the quick-reading prompt so the sheets themselves are visible.
+      if (await tapText(page, 'Skip')) await shot(page, size, '09b-section-sheets');
       if (await tapText(page, 'Temp')) {
         await shot(page, size, '10-temp-humidity');
         await page.goBack().catch(() => {});
@@ -165,6 +167,37 @@ for (const size of sizes) {
       await shot(page, size, '12-scan');
       await page.goBack().catch(() => {});
     }
+  }
+
+  // Deeper screens. Browser "back" does not pop Flutter routes reliably, so
+  // each path starts from a fresh load of the app.
+  const fresh = async () => {
+    await page.goto(base, { waitUntil: 'networkidle', timeout: 120000 });
+    await enableSemantics(page);
+    if (await tapText(page, 'Try the demo')) await wait(6000);
+    await tapText(page, 'Sections');
+    await wait(600);
+  };
+  const paths = [
+    ['15-section-analytics', ['5 machines', 'Skip', 'Analytics']],
+    ['16-entry-form', ['5 machines', 'Skip', ...(size.name === 'phone' ? ['Packing Report'] : []), 'Add Entry']],
+    ['17-analytics', ['Charts & Reports']],
+    ['18-week-analysis', ['Charts & Reports', 'Week Analysis']],
+    ['19-products', ['Admin tools', 'Manage Products']],
+    ['20-settings', ['Settings']],
+  ];
+  for (const [name, steps] of paths) {
+    await fresh();
+    let ok = true;
+    for (const step of steps) {
+      // "Skip" closes an optional prompt; missing is fine.
+      if (!(await tapText(page, step)) && step !== 'Skip') {
+        log.push(`[${size.name}] ${name}: "${step}" not found`);
+        ok = false;
+        break;
+      }
+    }
+    if (ok) await shot(page, size, name);
   }
 
   await ctx.close();

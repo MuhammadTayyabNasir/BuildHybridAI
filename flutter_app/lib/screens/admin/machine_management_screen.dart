@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/sections.dart';
 import '../../models/machine_model.dart';
 import '../../providers/machines_provider.dart';
+import '../../ui/pma_ui.dart';
 
 class MachineManagementScreen extends StatefulWidget {
   const MachineManagementScreen({super.key});
@@ -34,14 +35,11 @@ class _MachineManagementScreenState extends State<MachineManagementScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: PmaAppBar(
         title: const Text('Manage Machines'),
         bottom: TabBar(
           controller: _tabs,
           isScrollable: true,
-          indicatorColor: AppColors.primary,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
           tabs: Sections.all.map((s) => Tab(text: s.name)).toList(),
         ),
       ),

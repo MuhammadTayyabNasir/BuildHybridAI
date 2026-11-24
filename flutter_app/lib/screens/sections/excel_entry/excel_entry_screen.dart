@@ -20,6 +20,7 @@ import '../../../providers/products_provider.dart';
 import 'widgets/option_picker_dialog.dart';
 import 'widgets/product_picker_dialog.dart';
 import 'widgets/status_detail_dialogs.dart';
+import '../../../ui/pma_ui.dart';
 
 // ── Column widths ─────────────────────────────────────────────────────────────
 const _wNum = 36.0;
@@ -377,7 +378,7 @@ class _ExcelEntryScreenState extends State<ExcelEntryScreen> {
   Widget build(BuildContext context) {
     if (!_ready) {
       return Scaffold(
-        appBar: AppBar(title: Text('${widget.section.name} — Bulk Entry')),
+        appBar: PmaAppBar(title: Text('${widget.section.name} — Bulk Entry')),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -386,8 +387,7 @@ class _ExcelEntryScreenState extends State<ExcelEntryScreen> {
     final valid = _rows.where((r) => r.isValid(_customColumns)).length;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: color,
+      appBar: PmaAppBar(
         title: Text('${widget.section.name} — Bulk Entry'),
         actions: [
           Center(
@@ -401,8 +401,6 @@ class _ExcelEntryScreenState extends State<ExcelEntryScreen> {
           ),
           FilledButton.icon(
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: color,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),

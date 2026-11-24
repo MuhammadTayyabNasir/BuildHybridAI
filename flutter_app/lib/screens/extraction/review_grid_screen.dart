@@ -102,10 +102,8 @@ class _ReviewGridScreenState extends State<ReviewGridScreen> {
 
     return Scaffold(
       backgroundColor: Pma.canvas,
-      appBar: AppBar(
+      appBar: PmaAppBar(
         title: const Text('Review extracted rows'),
-        backgroundColor: Pma.canvas,
-        surfaceTintColor: Colors.transparent,
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(

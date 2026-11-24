@@ -697,3 +697,58 @@ class RoundedBarChart extends StatelessWidget {
     );
   }
 }
+
+/// The PMA gradient header used on every pushed screen: white title and
+/// icons on the warm hero gradient, and white tab labels underneath.
+class PmaAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const PmaAppBar({
+    super.key,
+    this.title,
+    this.actions,
+    this.bottom,
+    this.leading,
+  });
+
+  final Widget? title;
+  final List<Widget>? actions;
+  final PreferredSizeWidget? bottom;
+  final Widget? leading;
+
+  @override
+  Size get preferredSize =>
+      Size.fromHeight(kToolbarHeight + (bottom?.preferredSize.height ?? 0));
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Theme(
+      data: theme.copyWith(
+        tabBarTheme: theme.tabBarTheme.copyWith(
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.white,
+          dividerColor: Colors.transparent,
+        ),
+      ),
+      child: AppBar(
+        leading: leading,
+        title: title,
+        actions: actions,
+        bottom: bottom,
+        backgroundColor: Pma.ember,
+        foregroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(gradient: Pma.heroGradient),
+        ),
+        titleTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}

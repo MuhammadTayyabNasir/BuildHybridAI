@@ -13,6 +13,7 @@ import '../../../../services/th_sync.dart';
 import '../../../../services/th_threshold_service.dart';
 
 import 'controllers/th_row_controller.dart';
+import '../../../ui/pma_ui.dart';
 
 const _thWNum = 36.0;
 const _thWTime = 70.0;
@@ -179,7 +180,7 @@ class _TempHumidityExcelScreenState extends State<TempHumidityExcelScreen> {
 
     if (!_ready) {
       return Scaffold(
-        appBar: AppBar(foregroundColor: Colors.white, backgroundColor: color, title: Text('${widget.section.name} — T&H Report')),
+        appBar: PmaAppBar( title: Text('${widget.section.name} — T&H Report')),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -190,8 +191,7 @@ class _TempHumidityExcelScreenState extends State<TempHumidityExcelScreen> {
       builder: (context, _, _) {
         final threshold = thresholdSvc.forSection(widget.section.id);
         return Scaffold(
-          appBar: AppBar(
-            backgroundColor: color,
+          appBar: PmaAppBar(
             title: Text('${widget.section.name} — T&H Report'),
             actions: [
               TextButton.icon(
@@ -209,8 +209,6 @@ class _TempHumidityExcelScreenState extends State<TempHumidityExcelScreen> {
                 padding: const EdgeInsets.only(right: 8),
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: color,
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
