@@ -1,22 +1,19 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../models/machine_model.dart';
 import '../models/packing_entry_model.dart';
 import '../models/product_model.dart';
 import '../models/temp_humidity_model.dart';
 import '../models/user_model.dart';
+import 'local_db/local_db.dart';
 
 class LocalStorageService {
-  static const _dbName = 'pma_db.sqlite';
-  static const _dbVersion = 2;
+  static const _dbName = 'pma_db';
   static const String _kOfflineUser = 'offline_user_data';
   static const String _kOfflinePass = 'offline_user_pass';
-  Database? _db;
+  LocalDb? _db;
 
   // In-memory mirrors — all read methods are synchronous because they read these
   final Map<String, PackingEntryModel> _entries = {};
@@ -29,21 +26,7 @@ class LocalStorageService {
   // ── Init ─────────────────────────────────────────────────
 
   Future<void> init() async {
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      sqfliteFfiInit();
-      databaseFactory = databaseFactoryFfi;
-    }
-
-    final dir = await getApplicationDocumentsDirectory();
-    final path = '${dir.path}${Platform.pathSeparator}$_dbName';
-
-    _db = await openDatabase(
-      path,
-      version: _dbVersion,
-      onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
-    );
-
+    _db = await LocalDb.open(_dbName);
     await _loadAll();
   }
   Future<void> saveOfflineSession(UserModel user, String password) async {
@@ -93,78 +76,36 @@ class LocalStorageService {
       return null;
     }
   }
-  Future<void> _onCreate(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE entries (
-        id TEXT PRIMARY KEY,
-        section TEXT NOT NULL,
-        created_at INTEGER NOT NULL,
-        is_synced INTEGER NOT NULL DEFAULT 0,
-        data TEXT NOT NULL
-      )
-    ''');
-    await db.execute('CREATE INDEX idx_entries_section ON entries(section)');
-    await db.execute('CREATE INDEX idx_entries_created_at ON entries(created_at)');
-    await db.execute('CREATE INDEX idx_entries_is_synced ON entries(is_synced)');
-
-    await db.execute('CREATE TABLE products (id TEXT PRIMARY KEY, data TEXT NOT NULL)');
-    await db.execute('CREATE TABLE machines (id TEXT PRIMARY KEY, data TEXT NOT NULL)');
-    await db.execute('CREATE TABLE kv_store (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
-    await db.execute('CREATE TABLE pending_deletes (id TEXT PRIMARY KEY)');
-    await _createTempHumidityTable(db);
-  }
-
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) await _createTempHumidityTable(db);
-  }
-
-  Future<void> _createTempHumidityTable(Database db) async {
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS temp_humidity (
-        id TEXT PRIMARY KEY,
-        section_id TEXT NOT NULL,
-        date INTEGER NOT NULL,
-        shift TEXT NOT NULL,
-        is_synced INTEGER NOT NULL DEFAULT 0,
-        data TEXT NOT NULL
-      )
-    ''');
-    await db.execute(
-        'CREATE INDEX IF NOT EXISTS idx_th_section ON temp_humidity(section_id)');
-    await db.execute(
-        'CREATE INDEX IF NOT EXISTS idx_th_date ON temp_humidity(date)');
-  }
-
   Future<void> _loadAll() async {
     final db = _db!;
 
-    for (final row in await db.query('entries')) {
+    for (final row in await db.all('entries')) {
       final id = row['id'] as String;
       final map = jsonDecode(row['data'] as String) as Map<String, dynamic>;
       _entries[id] = PackingEntryModel.fromMap(map, id);
     }
 
-    for (final row in await db.query('products')) {
+    for (final row in await db.all('products')) {
       final id = row['id'] as String;
       final map = jsonDecode(row['data'] as String) as Map<String, dynamic>;
       _products[id] = ProductModel.fromMap(map, id);
     }
 
-    for (final row in await db.query('machines')) {
+    for (final row in await db.all('machines')) {
       final id = row['id'] as String;
       final map = jsonDecode(row['data'] as String) as Map<String, dynamic>;
       _machines[id] = MachineModel.fromMap(map, id);
     }
 
-    for (final row in await db.query('kv_store')) {
+    for (final row in await db.all('kv_store')) {
       _kv[row['key'] as String] = row['value'] as String;
     }
 
-    for (final row in await db.query('pending_deletes')) {
+    for (final row in await db.all('pending_deletes')) {
       _pendingDeletes.add(row['id'] as String);
     }
 
-    for (final row in await db.query('temp_humidity')) {
+    for (final row in await db.all('temp_humidity')) {
       final id = row['id'] as String;
       final map = jsonDecode(row['data'] as String) as Map<String, dynamic>;
       _tempReports[id] = TempHumidityReport.fromMap(map, id);
@@ -179,7 +120,7 @@ class LocalStorageService {
 
   Future<void> saveEntry(PackingEntryModel entry) async {
     _entries[entry.id] = entry;
-    await _db!.insert(
+    await _db!.put(
       'entries',
       {
         'id': entry.id,
@@ -188,13 +129,12 @@ class LocalStorageService {
         'is_synced': entry.isSynced ? 1 : 0,
         'data': jsonEncode(entry.toMap()),
       },
-      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
   Future<void> deleteEntry(String id) async {
     _entries.remove(id);
-    await _db!.delete('entries', where: 'id = ?', whereArgs: [id]);
+    await _db!.delete('entries', id);
   }
 
   List<PackingEntryModel> getEntries({String? section}) {
@@ -224,18 +164,13 @@ class LocalStorageService {
     final entry = _entries[id];
     if (entry == null) return;
     final synced = entry.copyWith(isSynced: true);
-    _entries[id] = synced;
-    await _db!.update(
-      'entries',
-      {'is_synced': 1, 'data': jsonEncode(synced.toMap())},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await saveEntry(synced);
   }
 
   Future<void> clearEntries(String section) async {
+    final ids = _entries.values.where((e) => e.section == section).map((e) => e.id).toList();
     _entries.removeWhere((_, e) => e.section == section);
-    await _db!.delete('entries', where: 'section = ?', whereArgs: [section]);
+    await _db!.deleteMany('entries', ids);
   }
 
   Future<int> clearOldSyncedEntries({int days = 7}) async {
@@ -248,11 +183,7 @@ class LocalStorageService {
       _entries.remove(id);
     }
     if (ids.isEmpty) return 0;
-    await _db!.delete(
-      'entries',
-      where: 'is_synced = 1 AND created_at < ?',
-      whereArgs: [cutoff.millisecondsSinceEpoch],
-    );
+    await _db!.deleteMany('entries', ids);
     return ids.length;
   }
 
@@ -262,16 +193,12 @@ class LocalStorageService {
 
   Future<void> addPendingDelete(String id) async {
     _pendingDeletes.add(id);
-    await _db!.insert(
-      'pending_deletes',
-      {'id': id},
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
+    await _db!.put('pending_deletes', {'id': id});
   }
 
   Future<void> removePendingDelete(String id) async {
     _pendingDeletes.remove(id);
-    await _db!.delete('pending_deletes', where: 'id = ?', whereArgs: [id]);
+    await _db!.delete('pending_deletes', id);
   }
 
   // ── Meta / Last Sync ─────────────────────────────────────
@@ -311,11 +238,7 @@ class LocalStorageService {
 
   Future<void> _setKv(String key, String value) async {
     _kv[key] = value;
-    await _db!.insert(
-      'kv_store',
-      {'key': key, 'value': value},
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await _db!.put('kv_store', {'key': key, 'value': value});
   }
 
   // ── Auth Cache ───────────────────────────────────────────
@@ -349,7 +272,7 @@ class LocalStorageService {
     ];
     for (final k in keys) {
       _kv.remove(k);
-      await _db!.delete('kv_store', where: 'key = ?', whereArgs: [k]);
+      await _db!.delete('kv_store', k);
     }
   }
 
@@ -375,23 +298,16 @@ class LocalStorageService {
     for (final p in products) {
       _products[p.id] = p;
     }
-    await _db!.transaction((txn) async {
-      await txn.delete('products');
-      for (final p in products) {
-        await txn.insert(
-          'products',
-          {'id': p.id, 'data': jsonEncode(p.toMap())},
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-      }
-    });
+    await _db!.replaceAll('products', [
+      for (final p in products) {'id': p.id, 'data': jsonEncode(p.toMap())},
+    ]);
   }
 
   List<ProductModel> getProducts() => _products.values.toList();
 
   Future<void> clearProductsCache() async {
     _products.clear();
-    await _db!.delete('products');
+    await _db!.clear('products');
   }
 
   // ── Machines Cache ────────────────────────────────────────
@@ -401,30 +317,23 @@ class LocalStorageService {
     for (final m in machines) {
       _machines[m.id] = m;
     }
-    await _db!.transaction((txn) async {
-      await txn.delete('machines');
-      for (final m in machines) {
-        await txn.insert(
-          'machines',
-          {'id': m.id, 'data': jsonEncode(m.toMap())},
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-      }
-    });
+    await _db!.replaceAll('machines', [
+      for (final m in machines) {'id': m.id, 'data': jsonEncode(m.toMap())},
+    ]);
   }
 
   List<MachineModel> getMachines() => _machines.values.toList();
 
   Future<void> clearMachinesCache() async {
     _machines.clear();
-    await _db!.delete('machines');
+    await _db!.clear('machines');
   }
 
   // ── Temperature & Humidity Reports ────────────────────────
 
   Future<void> saveTempHumidityReport(TempHumidityReport report) async {
     _tempReports[report.id] = report;
-    await _db!.insert(
+    await _db!.put(
       'temp_humidity',
       {
         'id': report.id,
@@ -434,13 +343,12 @@ class LocalStorageService {
         'is_synced': report.isSynced ? 1 : 0,
         'data': jsonEncode(report.toMap()),
       },
-      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
   Future<void> deleteTempHumidityReport(String id) async {
     _tempReports.remove(id);
-    await _db!.delete('temp_humidity', where: 'id = ?', whereArgs: [id]);
+    await _db!.delete('temp_humidity', id);
   }
 
   List<TempHumidityReport> getTempHumidityReports({String? sectionId}) {
@@ -460,12 +368,6 @@ class LocalStorageService {
     final report = _tempReports[id];
     if (report == null) return;
     final synced = report.copyWith(isSynced: true);
-    _tempReports[id] = synced;
-    await _db!.update(
-      'temp_humidity',
-      {'is_synced': 1, 'data': jsonEncode(synced.toMap())},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await saveTempHumidityReport(synced);
   }
 }

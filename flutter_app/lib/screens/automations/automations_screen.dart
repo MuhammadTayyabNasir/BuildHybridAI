@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../analytics/pma_metrics.dart';
-import '../../assistant/hybrid_ai.dart';
 import '../../automations/automation_rule.dart';
 import '../../automations/automation_service.dart';
 import '../../automations/rule_suggester.dart';
@@ -13,6 +12,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/local_storage_service.dart';
 import '../../services/th_threshold_service.dart';
 import '../../ui/pma_ui.dart';
+import '../../assistant/hybrid_ai_factory.dart';
 
 /// List, edit, pause and approve automations; see recent alerts.
 class AutomationsScreen extends StatefulWidget {
@@ -43,7 +43,7 @@ class _AutomationsScreenState extends State<AutomationsScreen> {
       threshold: context.read<ThThresholdService>().forSection,
     );
     setState(() => _suggesting = true);
-    final res = await svc.suggest(RuleSuggester(ChannelHybridAi()), metrics);
+    final res = await svc.suggest(RuleSuggester(createHybridAi()), metrics);
     if (!mounted) return;
     setState(() => _suggesting = false);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(

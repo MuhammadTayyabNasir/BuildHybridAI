@@ -11,6 +11,7 @@ import '../../services/local_storage_service.dart';
 import '../../services/th_threshold_service.dart';
 import '../../ui/pma_ui.dart';
 import '../assistant/assistant_screen.dart' show SourceBadge;
+import '../../assistant/hybrid_ai_factory.dart';
 
 /// Manager insights. Cloud Gemini (long context) designs a dashboard from
 /// aggregated numbers and writes a spoken explanation; Gemini Nano gives a
@@ -26,7 +27,7 @@ class InsightsScreen extends StatefulWidget {
 }
 
 class _InsightsScreenState extends State<InsightsScreen> {
-  late final HybridAi _ai = widget.ai ?? ChannelHybridAi();
+  late final HybridAi _ai = widget.ai ?? createHybridAi();
   late final VoiceIo _voice = widget.voice ?? VoiceIo();
   int _days = 30;
   bool _urdu = false;

@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../analytics/pma_metrics.dart';
 import '../../assistant/app_assistant_store.dart';
 import '../../assistant/assistant_service.dart';
-import '../../assistant/hybrid_ai.dart';
 import '../../core/constants/sections.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/connectivity_provider.dart';
@@ -18,6 +17,7 @@ import '../automations/automations_screen.dart';
 import '../../ui/pma_ui.dart';
 import '../sections/section_home_screen.dart';
 import '../sections/temp_humidity/temp_humidity_screen.dart';
+import '../../assistant/hybrid_ai_factory.dart';
 
 /// Operator home: today's numbers in a warm gradient hero, what is still
 /// missing this shift, each section's latest reading, and 7-day trends.
@@ -50,7 +50,7 @@ class _TodayScreenState extends State<TodayScreen> {
       threshold: thresholds.forSection,
     );
     final missing = AssistantService(
-      ai: ChannelHybridAi(),
+      ai: createHybridAi(),
       store: AppAssistantStore(
         local: local,
         firestore: context.read<FirestoreService>(),

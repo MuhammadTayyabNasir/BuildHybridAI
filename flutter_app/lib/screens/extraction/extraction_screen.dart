@@ -15,6 +15,7 @@ import '../../extraction/pdf_pages.dart';
 import '../../services/local_storage_service.dart';
 import '../../ui/pma_ui.dart';
 import 'review_grid_screen.dart';
+import '../../assistant/hybrid_ai_factory.dart';
 
 /// Turn paper packing sheets into entries:
 /// * Photo — on-device OCR (ML Kit) + Gemini Nano structures the rows, works
@@ -32,7 +33,7 @@ class ExtractionScreen extends StatefulWidget {
 }
 
 class _ExtractionScreenState extends State<ExtractionScreen> {
-  late final HybridAi _ai = widget.ai ?? ChannelHybridAi();
+  late final HybridAi _ai = widget.ai ?? createHybridAi();
   String? _status;
   bool _busy = false;
   PdfExtractionJob? _job;

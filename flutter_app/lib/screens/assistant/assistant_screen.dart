@@ -20,6 +20,7 @@ import '../sections/temp_humidity/temp_humidity_screen.dart';
 import '../automations/automations_screen.dart';
 import '../extraction/extraction_screen.dart';
 import '../settings/settings_screen.dart';
+import '../../assistant/hybrid_ai_factory.dart';
 
 class _Turn {
   _Turn.user(this.text)
@@ -65,7 +66,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
   @override
   void initState() {
     super.initState();
-    _ai = widget.ai ?? ChannelHybridAi();
+    _ai = widget.ai ?? createHybridAi();
     _voice = widget.voice ?? VoiceIo();
     final user = context.read<AuthProvider>().user;
     final conn = context.read<ConnectivityProvider>();

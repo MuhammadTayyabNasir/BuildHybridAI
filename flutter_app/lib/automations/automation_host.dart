@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../assistant/app_assistant_store.dart';
 import '../assistant/assistant_service.dart';
-import '../assistant/hybrid_ai.dart';
 import '../providers/auth_provider.dart';
 import '../providers/connectivity_provider.dart';
 import '../services/firestore_service.dart';
@@ -13,6 +12,7 @@ import '../ui/pma_ui.dart';
 import 'automation_cloud.dart';
 import 'automation_engine.dart';
 import 'automation_service.dart';
+import '../assistant/hybrid_ai_factory.dart';
 
 /// Creates the [AutomationService] for the signed-in user, runs it while the
 /// home screens are open, shows fired events as banners and registers the
@@ -38,7 +38,7 @@ class _AutomationHostState extends State<AutomationHost> with WidgetsBindingObse
     final connectivity = context.read<ConnectivityProvider>();
     final user = auth.user;
     final assistant = AssistantService(
-      ai: ChannelHybridAi(),
+      ai: createHybridAi(),
       store: AppAssistantStore(
         local: local,
         firestore: context.read<FirestoreService>(),
