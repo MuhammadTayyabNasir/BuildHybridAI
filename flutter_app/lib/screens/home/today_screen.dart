@@ -13,6 +13,7 @@ import '../../services/firestore_service.dart';
 import '../../services/local_storage_service.dart';
 import '../../services/th_threshold_service.dart';
 import '../../automations/automation_service.dart';
+import '../extraction/extraction_screen.dart';
 import '../automations/automations_screen.dart';
 import '../../ui/pma_ui.dart';
 import '../sections/section_home_screen.dart';
@@ -249,6 +250,27 @@ class _TodayScreenState extends State<TodayScreen> {
                   ]),
                 );
               }),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: PmaCard(
+                onTap: () => _open(context, const ExtractionScreen()),
+                child: const Row(children: [
+                  CircleAvatar(
+                    backgroundColor: Color(0x1FFF6A3D),
+                    child: Icon(Icons.document_scanner_outlined, color: Pma.ember),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('Scan paper forms', style: TextStyle(fontWeight: FontWeight.w700)),
+                      Text('Photo or bulk PDF → reviewed packing entries',
+                          style: TextStyle(fontSize: 12, color: Pma.inkSoft)),
+                    ]),
+                  ),
+                  Icon(Icons.chevron_right),
+                ]),
+              ),
             ),
             const _SectionTitle('Sections'),
             Padding(

@@ -69,7 +69,7 @@ class MainActivity : FlutterActivity() {
                 "humidity" to Schema.double("Relative humidity percent if said", true),
                 "shift" to Schema.string("morning or night if said, else empty"),
                 "screen" to Schema.string(
-                    "For open_screen: dashboard, temp_humidity, entries, analytics, settings, automations. Else empty.",
+                    "For open_screen: dashboard, temp_humidity, entries, analytics, settings, automations, extraction (scan paper forms). Else empty.",
                 ),
                 "period" to Schema.string("today, yesterday or week. Default today."),
                 "product" to Schema.string("Product name for add_packing_entry, else empty"),

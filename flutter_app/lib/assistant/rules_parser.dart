@@ -267,6 +267,7 @@ class RulesParser {
     if (_has(t, const ['automation', 'alert', 'reminder', 'yaad dahani', 'آٹومیشن', 'الرٹ'])) {
       return 'automations';
     }
+    if (_has(t, const ['scan', 'pdf', 'kaghaz', 'kagaz', 'paper', 'photo', 'کاغذ'])) return 'extraction';
     if (_has(t, const ['setting', 'سیٹنگ'])) return 'settings';
     if (_has(t, const ['analytic', 'report', 'graph', 'chart', 'رپورٹ'])) {
       return 'analytics';

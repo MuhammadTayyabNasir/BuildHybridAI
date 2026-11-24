@@ -842,6 +842,7 @@ class AssistantService {
       'temp_humidity' => ('temperature & humidity sheet', 'ٹمپریچر اور ہیومیڈیٹی شیٹ'),
       'settings' => ('settings', 'سیٹنگز'),
       'automations' => ('automations', 'آٹومیشنز'),
+      'extraction' => ('paper form scanner', 'کاغذی فارم اسکینر'),
       'analytics' => ('analytics', 'اینالیٹکس'),
       'dashboard' => ('dashboard', 'ڈیش بورڈ'),
       _ => ('packing sheet', 'پیکنگ شیٹ'),
