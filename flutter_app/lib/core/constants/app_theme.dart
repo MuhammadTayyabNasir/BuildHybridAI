@@ -36,11 +36,9 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.poppins(
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          color: _ink,
-        ),
+        // No colour here: the title follows each AppBar's foregroundColor,
+        // so white-on-orange headers stay readable (Poppins comes from the
+        // text theme).
       ),
       cardTheme: CardThemeData(
         color: Colors.white,

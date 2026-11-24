@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../ui/pma_ui.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -273,6 +274,16 @@ class _SectionHomeScreenState extends State<SectionHomeScreen>
       appBar: AppBar(
         backgroundColor: color,
         foregroundColor: Colors.white,
+        // Same gradient header as the rest of PMA; the theme's dark title
+        // colour is overridden so it reads on orange.
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(gradient: Pma.heroGradient),
+        ),
+        titleTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+        ),
         title: Text(section.name),
         actions: [
           IconButton(
@@ -311,6 +322,16 @@ class _SectionHomeScreenState extends State<SectionHomeScreen>
     return AppBar(
       backgroundColor: color,
       foregroundColor: Colors.white,
+      // Same gradient header as the rest of PMA; the theme's dark title
+      // colour is overridden so it reads on orange.
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(gradient: Pma.heroGradient),
+      ),
+      titleTextStyle: const TextStyle(
+        color: Colors.white,
+        fontSize: 20,
+        fontWeight: FontWeight.w800,
+      ),
       title: Text(section.name),
       actions: [
         IconButton(

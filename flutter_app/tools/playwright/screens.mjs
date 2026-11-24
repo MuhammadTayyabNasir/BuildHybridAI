@@ -128,7 +128,16 @@ for (const size of sizes) {
   if (await tapText(page, 'Sections')) {
     await wait(600);
     // "5 machines" only appears on the Chips card of the Sections tab.
-    if (await tapText(page, '5 machines')) {
+    // Section cards have no text semantics of their own; click the first
+    // card (Chips) by position if the text lookup fails.
+    let opened = await tapText(page, '5 machines');
+    if (!opened) {
+      const at = size.name === 'phone' ? [100, 230] : [350, 260];
+      await page.mouse.click(at[0], at[1]);
+      await wait(1500);
+      opened = true;
+    }
+    if (opened) {
       await shot(page, size, '09-section-chips');
       if (await tapText(page, 'Temp')) {
         await shot(page, size, '10-temp-humidity');
