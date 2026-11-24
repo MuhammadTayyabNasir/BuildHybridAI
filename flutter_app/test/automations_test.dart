@@ -24,6 +24,9 @@ TempHumidityReport report(String section, DateTime at,
     );
 
 class TextAi implements HybridAi {
+  @override
+  bool get onDeviceReady => false;
+
   TextAi(this.text);
   final String? text;
   @override

@@ -16,6 +16,9 @@ HybridAi createPlatformHybridAi() => ChromeHybridAi(cloud: CloudHybridAi());
 class ChromeHybridAi implements HybridAi {
   ChromeHybridAi({required this.cloud});
 
+  @override
+  bool get onDeviceReady => _session != null;
+
   final HybridAi cloud;
   JSObject? _session;
 

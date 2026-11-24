@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import '../models/machine_model.dart';
 import '../models/packing_entry_model.dart';
+import '../models/product_model.dart';
+import '../providers/entries_provider.dart';
 import '../models/temp_humidity_model.dart';
 import '../models/th_threshold_model.dart';
 import '../services/firestore_service.dart';
@@ -19,7 +22,12 @@ class AppAssistantStore implements AssistantStore {
     required this.isOnline,
     required this.userId,
     required this.userName,
+    this.entries,
   });
+
+  /// When given, voice packing checks go through the same provider as the
+  /// entry form, so open lists refresh at once.
+  final EntriesProvider? entries;
 
   final LocalStorageService local;
   final FirestoreService firestore;
@@ -62,6 +70,42 @@ class AppAssistantStore implements AssistantStore {
         await firestore.deleteTempHumidityReport(id);
       } catch (_) {}
     }());
+  }
+
+  @override
+  List<ProductModel> products() => local.getProducts();
+
+  @override
+  List<MachineModel> machines() => local.getMachines();
+
+  @override
+  Future<String> savePackingEntry(PackingEntryModel entry) async {
+    final provider = entries;
+    if (provider != null) return provider.addEntryReturningId(entry);
+    final id = DateTime.now().microsecondsSinceEpoch.toString();
+    final withId = entry.copyWith(id: id, isSynced: false);
+    await local.saveEntry(withId);
+    if (isOnline()) {
+      unawaited(() async {
+        try {
+          await firestore.saveEntry(withId);
+        } catch (_) {
+          // Stays unsynced; SyncService uploads it later.
+        }
+      }());
+    }
+    return id;
+  }
+
+  @override
+  Future<void> deletePackingEntry(String id) async {
+    final provider = entries;
+    final match = local.getEntries().where((e) => e.id == id);
+    if (provider != null && match.isNotEmpty) {
+      await provider.deleteEntry(match.first);
+      return;
+    }
+    await local.deleteEntry(id);
   }
 
   @override

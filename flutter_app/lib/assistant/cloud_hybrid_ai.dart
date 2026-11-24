@@ -63,6 +63,9 @@ String todayLabel(DateTime now) => '${now.year}-${now.month}-${now.day} ${now.ho
 /// on iOS (until Apple Foundation Models are bridged) and as the fallback
 /// behind Chrome's built-in model on web.
 class CloudHybridAi implements HybridAi {
+  @override
+  bool get onDeviceReady => false;
+
   CloudHybridAi({GenerativeModel? json, GenerativeModel? text})
       : _json = json,
         _text = text;

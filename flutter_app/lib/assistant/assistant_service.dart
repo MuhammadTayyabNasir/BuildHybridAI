@@ -2,11 +2,14 @@ import 'dart:convert';
 
 import '../analytics/pma_metrics.dart';
 import '../core/constants/sections.dart';
+import '../models/machine_model.dart';
 import '../models/packing_entry_model.dart';
+import '../models/product_model.dart';
 import '../models/temp_humidity_model.dart';
 import '../models/th_threshold_model.dart';
 import 'assistant_intent.dart';
 import 'hybrid_ai.dart';
+import 'packing_voice.dart';
 import 'rules_parser.dart';
 
 /// Data the assistant reads and writes. Backed by the app's local-first
@@ -19,6 +22,12 @@ abstract class AssistantStore {
   ThThreshold thresholdFor(String sectionId);
   Future<void> saveThReport(TempHumidityReport report);
   Future<void> deleteThReport(String id);
+  List<ProductModel> products();
+  List<MachineModel> machines();
+
+  /// Saves a packing check the same way the entry form does; returns its id.
+  Future<String> savePackingEntry(PackingEntryModel entry);
+  Future<void> deletePackingEntry(String id);
   String? meta(String key);
   Future<void> setMeta(String key, String value);
 }
@@ -30,7 +39,16 @@ class NavTarget {
   final String? sectionId;
 }
 
-enum PendingKind { thReading, needSection, fastModeOn, fastModeOff, undo, batchReview }
+enum PendingKind {
+  thReading,
+  needSection,
+  fastModeOn,
+  fastModeOff,
+  undo,
+  batchReview,
+  packingNeedInfo,
+  packingReview,
+}
 
 /// A temperature / humidity reading waiting for the operator's "haan".
 class ThDraft {
@@ -62,9 +80,12 @@ class ThDraft {
 }
 
 class PendingAction {
-  const PendingAction(this.kind, {this.draft, this.batch = const []});
+  const PendingAction(this.kind, {this.draft, this.batch = const [], this.packing});
   final PendingKind kind;
   final ThDraft? draft;
+
+  /// Packing check being collected or waiting for "haan".
+  final PackingDraft? packing;
 
   /// Items waiting for one confirmation in batch mode.
   final List<ThDraft> batch;
@@ -134,7 +155,14 @@ class AssistantService {
     required this.ai,
     this.rules = const RulesParser(),
     DateTime Function()? clock,
-  }) : _clock = clock ?? DateTime.now;
+    Future<bool> Function()? isOnline,
+  })  : _clock = clock ?? DateTime.now,
+        isOnline = isOnline ?? _assumeOnline;
+
+  static Future<bool> _assumeOnline() async => true;
+
+  /// Whether the cloud model can be reached right now.
+  final Future<bool> Function() isOnline;
 
   static const fastModeKey = 'pma_fast_mode';
   static const scheduleKey = 'pma_th_schedule';
@@ -142,7 +170,11 @@ class AssistantService {
   final AssistantStore store;
   final HybridAi ai;
   final RulesParser rules;
+  final PackingVoice packingVoice = const PackingVoice();
   final DateTime Function() _clock;
+
+  /// Id of the last packing check saved by voice, for "undo".
+  String? _lastPackingId;
 
   PendingAction? pending;
 
@@ -157,6 +189,15 @@ class AssistantService {
   /// Understands [text] with the hybrid model, falling back to rules.
   Future<AssistantIntent> understand(String text) async {
     final local = rules.parse(text);
+    // Clear commands ("peri peri humidity 45", "aaj kitni entries") are
+    // answered at once from the phone. The model is asked only when the
+    // rules are unsure or a reading has no section, and never while offline
+    // without Nano, where it could only time out.
+    final clear = local.type != IntentType.unknown &&
+        local.confidence >= 0.85 &&
+        (local.type != IntentType.addThReading || local.section != null);
+    if (clear && !ai.onDeviceReady) return local;
+    if (!ai.onDeviceReady && !(await isOnline())) return local;
     final answer = await ai.parseIntent(text, now: _clock());
     final model = answer == null
         ? null
@@ -216,6 +257,7 @@ class AssistantService {
       );
     }
     if (rules.isUndo(trimmed)) return _askUndo();
+    if (packingVoice.looksLikePacking(trimmed)) return _startPacking(trimmed);
 
     final intent = await understand(trimmed);
     switch (intent.type) {
@@ -230,13 +272,8 @@ class AssistantService {
       case IntentType.dailySummary:
         return dailySummary(intent);
       case IntentType.addPackingEntry:
-        final section = intent.section;
-        return AssistantReply(
-          en: 'Opening the packing entry sheet${section == null ? '' : ' for ${_nameEn(section)}'}. Voice packing entries are filled on that sheet.',
-          ur: 'پیکنگ انٹری شیٹ کھول رہا ہوں${section == null ? '' : '، ${_nameUr(section)}'}۔',
-          source: intent.source,
-          navigate: NavTarget('entries', section),
-        );
+        return _startPacking(trimmed,
+            base: PackingDraft(sectionId: intent.section), source: intent.source);
       case IntentType.unknown:
         return AssistantReply(
           en: 'Sorry, I did not understand. You can say: "Peri Peri humidity 45", "how many entries today", or "any missed entries today".',
@@ -304,7 +341,8 @@ class AssistantService {
         '$checks packing checks, $missing scheduled readings still missing.';
     final factsUr = 'آج: $readings ٹمپریچر/ہیومیڈیٹی ریڈنگز ($red سرخ حد سے اوپر)، '
         '$checks پیکنگ چیکس، $missing شیڈول ریڈنگز باقی۔';
-    final answer = await ai.generate(
+    final canAsk = ai.onDeviceReady || await isOnline();
+    final answer = !canAsk ? null : await ai.generate(
       'You brief a snack factory shift supervisor. Using ONLY these facts, write two lines. '
       'Line 1: one or two short English sentences. Line 2: the same in Urdu script. '
       'No other text. Facts: $factsEn',
@@ -599,6 +637,13 @@ class AssistantService {
   Future<AssistantReply> _answerPending(String text) async {
     final p = pending!;
     if (p.kind == PendingKind.batchReview) return _answerBatch(p, text);
+    if (p.kind == PendingKind.packingNeedInfo || p.kind == PendingKind.packingReview) {
+      final kind = rules.confirmReply(text).kind;
+      if (kind == ConfirmKind.no) return _cancelled();
+      if (kind == ConfirmKind.yes && p.kind == PendingKind.packingReview) return _confirm(p);
+      // Anything else adds or corrects details; a change is always read back.
+      return _startPacking(text, base: p.packing, forceConfirm: p.kind == PendingKind.packingReview);
+    }
     if (p.kind == PendingKind.needSection) {
       final sec = AssistantIntent.normalizeSection(RulesParser.normalize(text));
       if (sec == null) {
@@ -647,6 +692,19 @@ class AssistantService {
   Future<AssistantReply> _confirm(PendingAction p) async {
     pending = null;
     switch (p.kind) {
+      case PendingKind.packingReview:
+        final d = p.packing!;
+        _lastPackingId = await store.savePackingEntry(_packingEntry(d));
+        _lastSave = null;
+        return AssistantReply(
+          en: 'Saved the packing check. ${_packingEn(d)}.',
+          ur: 'پیکنگ چیک محفوظ ہو گیا۔ ${_packingUr(d)}۔',
+          source: AnswerSource.rules,
+          saved: true,
+          statuses: _packingStatuses(d),
+        );
+      case PendingKind.packingNeedInfo:
+        return _repeat(p);
       case PendingKind.thReading:
         final d = p.draft!;
         await _save(d, confirmedBy: store.userName);
@@ -668,6 +726,16 @@ class AssistantService {
           source: AnswerSource.rules,
         );
       case PendingKind.undo:
+        final packingId = _lastPackingId;
+        if (packingId != null) {
+          await store.deletePackingEntry(packingId);
+          _lastPackingId = null;
+          return const AssistantReply(
+            en: 'Done. The last packing check was removed.',
+            ur: 'ہو گیا۔ آخری پیکنگ چیک ہٹا دیا گیا۔',
+            source: AnswerSource.rules,
+          );
+        }
         final last = _lastSave;
         if (last == null) return _nothingToUndo();
         if (last.before == null) {
@@ -698,7 +766,7 @@ class AssistantService {
   }
 
   AssistantReply _askUndo() {
-    if (_lastSave == null) return _nothingToUndo();
+    if (_lastSave == null && _lastPackingId == null) return _nothingToUndo();
     pending = const PendingAction(PendingKind.undo);
     return AssistantReply(
       en: 'Remove the last reading I saved? Say yes or no.',
@@ -748,6 +816,7 @@ class AssistantService {
   AssistantReply cancelPending() => _cancelled();
 
   Future<void> _save(ThDraft d, {required String confirmedBy}) async {
+    _lastPackingId = null;
     final now = _clock();
     final day = TempHumidityReport.dayOf(now);
     final existing = store.thReports().where((r) =>
@@ -882,6 +951,155 @@ class AssistantService {
       p == 'yesterday' ? 'Yesterday' : p == 'week' ? 'In the last 7 days' : 'Today';
   static String _periodUr(String p) =>
       p == 'yesterday' ? 'کل' : p == 'week' ? 'پچھلے 7 دنوں میں' : 'آج';
+
+  // ---------------------------------------------------------------- packing
+
+  /// Collects a spoken packing check, asks for whatever is missing, then
+  /// reads it back. It is saved only after "haan" (fast mode skips the
+  /// question for an all-green check that stated leakage and printing).
+  Future<AssistantReply> _startPacking(
+    String text, {
+    PackingDraft? base,
+    AnswerSource source = AnswerSource.rules,
+    bool forceConfirm = false,
+  }) async {
+    final hintSection = base?.sectionId ??
+        AssistantIntent.normalizeSection(RulesParser.normalize(text));
+    final heard = packingVoice.parse(text, products: store.products(), sectionId: hintSection);
+    var d = (base ?? const PackingDraft()).merge(heard);
+    if (d.product == null && d.sectionId != null) {
+      final pool = store.products().where((p) => p.isActive && p.section == d.sectionId).toList();
+      d = d.withProduct(PackingVoice.matchProduct(RulesParser.normalize(text), pool));
+    }
+    final missing = packingVoice.missing(d).toList();
+    if (d.machineNumber != null &&
+        d.sectionId != null &&
+        packingVoice.machineFor(d, store.machines()) == null) {
+      // Not a machine of this section: ask again instead of saving a guess.
+      missing.add('machine');
+      d = PackingDraft(
+        sectionId: d.sectionId,
+        product: d.product,
+        productQuery: d.productQuery,
+        weights: d.weights,
+        moisture: d.moisture,
+        leakageOk: d.leakageOk,
+        printingOk: d.printingOk,
+      );
+    }
+    if (missing.isNotEmpty) {
+      pending = PendingAction(PendingKind.packingNeedInfo, packing: d);
+      return _askPacking(d, missing.first, source);
+    }
+    final st = _packingStatuses(d);
+    final bad = st.values.any((v) => v == 'red' || v == 'yellow');
+    final stated = d.leakageOk != null && d.printingOk != null;
+    if (fastMode && !forceConfirm && !bad && stated) {
+      return _confirm(PendingAction(PendingKind.packingReview, packing: d));
+    }
+    pending = PendingAction(PendingKind.packingReview, packing: d);
+    return AssistantReply(
+      en: '${_packingEn(d)}.${bad ? ' This is outside the limit.' : ''} Save it? Say yes or no, or say what to change.',
+      ur: '${_packingUr(d)}۔${bad ? ' یہ حد سے باہر ہے۔' : ''} محفوظ کر دوں؟ ہاں یا نہیں، یا بتائیں کیا بدلنا ہے۔',
+      source: source,
+      pending: pending,
+      statuses: st,
+    );
+  }
+
+  AssistantReply _askPacking(PackingDraft d, String missing, AnswerSource source) {
+    final products = store
+        .products()
+        .where((p) => p.isActive && (d.sectionId == null || p.section == d.sectionId))
+        .take(4)
+        .map((p) => p.name)
+        .join(', ');
+    final section = d.sectionId;
+    final (String en, String ur) = switch (missing) {
+      'section' => (
+          'Which section is this packing check for? Chips, Peri Peri, Nimko, Wafer or Chocolate.',
+          'یہ پیکنگ چیک کس سیکشن کا ہے؟ چپس، پیری پیری، نمکو، ویفر یا چاکلیٹ۔'
+        ),
+      'product' => (
+          'Which product? For example: $products.',
+          'کون سی پروڈکٹ؟ مثلاً: $products۔'
+        ),
+      'machine' => (
+          'Which machine number${section == null ? '' : ' in ${_nameEn(section)}'}?',
+          '${section == null ? '' : '${_nameUr(section)} میں '}کون سی مشین نمبر؟'
+        ),
+      _ => (
+          'Say the pouch weights in grams, up to four, for example "weight 52 53 51 52".',
+          'پاؤچ کا وزن گرام میں بولیں، چار تک، مثلاً "وزن 52 53 51 52"۔'
+        ),
+    };
+    return AssistantReply(en: en, ur: ur, source: source, pending: pending);
+  }
+
+  Map<String, String> _packingStatuses(PackingDraft d) => {
+        'weight': d.weightStatus(),
+        if (d.moistureStatus() != 'na') 'moisture': d.moistureStatus(),
+        'leakage': d.leakageOk == false ? 'red' : 'green',
+        'printing': d.printingOk == false ? 'red' : 'green',
+      };
+
+  static String _num(double v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+
+  String _packingEn(PackingDraft d) {
+    final w = d.weights.map(_num).join(', ');
+    return '${_nameEn(d.sectionId!)}, machine ${d.machineNumber}, ${d.product!.name}: '
+        'pouches $w g (${d.weightStatus()})'
+        '${d.moisture == null ? '' : ', moisture ${_num(d.moisture!)} (${d.moistureStatus()})'}'
+        ', leakage ${d.leakageOk == false ? 'found' : 'OK'}'
+        ', printing ${d.printingOk == false ? 'not OK' : 'OK'}';
+  }
+
+  String _packingUr(PackingDraft d) {
+    final w = d.weights.map(_num).join('، ');
+    const st = {'green': 'سبز', 'yellow': 'پیلا', 'red': 'سرخ', 'na': ''};
+    return '${_nameUr(d.sectionId!)}، مشین ${d.machineNumber}، ${d.product!.name}: '
+        'پاؤچ $w گرام (${st[d.weightStatus()]})'
+        '${d.moisture == null ? '' : '، نمی ${_num(d.moisture!)} (${st[d.moistureStatus()]})'}'
+        '، لیکج ${d.leakageOk == false ? 'ہے' : 'ٹھیک'}'
+        '، پرنٹنگ ${d.printingOk == false ? 'ٹھیک نہیں' : 'ٹھیک'}';
+  }
+
+  PackingEntryModel _packingEntry(PackingDraft d) {
+    final p = d.product!;
+    final m = packingVoice.machineFor(d, store.machines());
+    final now = _clock();
+    double? pouch(int i) => i < d.weights.length ? d.weights[i] : null;
+    return PackingEntryModel(
+      id: '',
+      machineId: m?.id ?? '',
+      machineNumber: d.machineNumber!,
+      section: d.sectionId!,
+      productId: p.id,
+      productName: p.displayName,
+      price: p.price,
+      shift: ShiftHelper.detectShift(),
+      operatorId: store.userId,
+      operatorName: store.userName,
+      dateCodingManufacture: now,
+      dateCodingExpiry: now.add(Duration(days: p.expiryDays)),
+      grossWeight: p.weightGrams,
+      pouch1Weight: pouch(0),
+      pouch2Weight: pouch(1),
+      pouch3Weight: pouch(2),
+      pouch4Weight: pouch(3),
+      moistureIdeal: p.moistureMax,
+      moistureActual: d.moisture,
+      weightStatus: d.weightStatus(),
+      printingStatus: d.printingOk == false ? 'not_okay' : 'okay',
+      printingColor: d.printingOk == false ? 'red' : null,
+      leakageStatus: d.leakageOk == false ? 'red' : 'green',
+      moistureStatus: d.moistureStatus(),
+      isSynced: false,
+      createdAt: now,
+      updatedAt: now,
+    );
+  }
 
   static String _nameEn(String id) => Sections.byId(id).name;
   static String _nameUr(String id) => const {

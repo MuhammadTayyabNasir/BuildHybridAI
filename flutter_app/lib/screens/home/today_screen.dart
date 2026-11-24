@@ -51,6 +51,7 @@ class _TodayScreenState extends State<TodayScreen> {
     );
     final missing = AssistantService(
       ai: createHybridAi(),
+      isOnline: () async => online,
       store: AppAssistantStore(
         local: local,
         firestore: context.read<FirestoreService>(),
@@ -428,7 +429,16 @@ class _Metric extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: color),
           const SizedBox(width: 4),
-          Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+          // Narrow phones (360 dp) give each metric ~58 dp; shrink instead
+          // of overflowing.
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(value,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+            ),
+          ),
         ],
       );
 }

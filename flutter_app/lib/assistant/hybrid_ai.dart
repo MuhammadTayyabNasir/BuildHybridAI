@@ -17,6 +17,10 @@ class HybridAnswer {
 abstract class HybridAi {
   bool get available;
 
+  /// True once this device reported a ready on-device model. Until then
+  /// callers skip the model when offline instead of waiting for a timeout.
+  bool get onDeviceReady;
+
   /// 'available' | 'downloadable' | 'downloading' | 'unavailable' | 'unsupported'
   Future<String> status();
 
@@ -33,6 +37,10 @@ class ChannelHybridAi implements HybridAi {
       : _channel = channel ?? const MethodChannel('pma/hybrid_ai');
 
   final MethodChannel _channel;
+  String _status = 'unknown';
+
+  @override
+  bool get onDeviceReady => _status == 'available';
 
   @override
   bool get available =>
@@ -42,9 +50,10 @@ class ChannelHybridAi implements HybridAi {
   Future<String> status() async {
     if (!available) return 'unsupported';
     try {
-      return await _channel.invokeMethod<String>('status') ?? 'unavailable';
+      return _status =
+          await _channel.invokeMethod<String>('status') ?? 'unavailable';
     } catch (_) {
-      return 'unavailable';
+      return _status = 'unavailable';
     }
   }
 

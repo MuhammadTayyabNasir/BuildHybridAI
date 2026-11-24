@@ -39,6 +39,7 @@ class _AutomationHostState extends State<AutomationHost> with WidgetsBindingObse
     final user = auth.user;
     final assistant = AssistantService(
       ai: createHybridAi(),
+      isOnline: () async => connectivity.isOnline,
       store: AppAssistantStore(
         local: local,
         firestore: context.read<FirestoreService>(),

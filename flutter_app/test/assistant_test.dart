@@ -3,7 +3,9 @@ import 'package:pma/assistant/assistant_intent.dart';
 import 'package:pma/assistant/assistant_service.dart';
 import 'package:pma/assistant/hybrid_ai.dart';
 import 'package:pma/assistant/rules_parser.dart';
+import 'package:pma/models/machine_model.dart';
 import 'package:pma/models/packing_entry_model.dart';
+import 'package:pma/models/product_model.dart';
 import 'package:pma/models/temp_humidity_model.dart';
 import 'package:pma/models/th_threshold_model.dart';
 
@@ -30,10 +32,41 @@ class FakeStore implements AssistantStore {
   String? meta(String key) => kv[key];
   @override
   Future<void> setMeta(String key, String value) async => kv[key] = value;
+
+  final productList = <ProductModel>[
+    const ProductModel(
+      id: 'p1', name: 'Masala Chips', section: 'chips', price: 20,
+      weightGrams: 50, moistureMax: 1.7, moistureYellowMax: 2.0, expiryDays: 120,
+    ),
+    const ProductModel(
+      id: 'p2', name: 'Cheese Chips', section: 'chips', price: 30,
+      weightGrams: 70, moistureMax: 1.7, moistureYellowMax: 2.0, expiryDays: 120,
+    ),
+  ];
+  final machineList = <MachineModel>[
+    const MachineModel(id: 'm3', number: 3, section: 'chips'),
+  ];
+  @override
+  List<ProductModel> products() => productList;
+  @override
+  List<MachineModel> machines() => machineList;
+  @override
+  Future<String> savePackingEntry(PackingEntryModel e) async {
+    final id = 'e${entries.length + 1}';
+    entries.add(e.copyWith(id: id));
+    return id;
+  }
+
+  @override
+  Future<void> deletePackingEntry(String id) async =>
+      entries.removeWhere((e) => e.id == id);
 }
 
 /// No on-device model and no network: everything goes through the rules.
 class OfflineAi implements HybridAi {
+  @override
+  bool get onDeviceReady => false;
+
   @override
   bool get available => false;
   @override
@@ -318,14 +351,80 @@ void main() {
       expect(ai.prompt, contains('0 packing checks'));
     });
 
-    test('model answer source is reported', () async {
+    test('clear commands are answered on the phone without waiting for a model', () async {
+      final ai = ScriptedAi('{"intent":"unknown"}', AnswerSource.cloud);
+      final s = AssistantService(store: store, ai: ai, clock: () => now);
+      final r = await s.handle('how many entries did I make today');
+      expect(r.source, AnswerSource.rules);
+    });
+
+    test('unclear commands go to the model and its source is reported', () async {
       final cloud = AssistantService(
         store: store,
         ai: ScriptedAi('{"intent":"count_entries","period":"today"}', AnswerSource.cloud),
         clock: () => now,
       );
-      final r = await cloud.handle('how many entries did I make today');
+      final r = await cloud.handle('what did I get done on the line');
       expect(r.source, AnswerSource.cloud);
+    });
+
+    test('offline without Nano skips the model', () async {
+      final s = AssistantService(
+        store: store,
+        ai: ScriptedAi('{"intent":"count_entries","period":"today"}', AnswerSource.cloud),
+        clock: () => now,
+        isOnline: () async => false,
+      );
+      final r = await s.handle('what did I get done on the line');
+      expect(r.source, AnswerSource.rules);
+    });
+  });
+
+  group('voice packing checks', () {
+    late FakeStore store;
+    late AssistantService s;
+    setUp(() {
+      store = FakeStore();
+      s = AssistantService(store: store, ai: OfflineAi(), isOnline: () async => false);
+    });
+
+    test('a full sentence is read back and saved only after haan', () async {
+      final r = await s.handle('chips machine 3 masala weight 50 51 49 50 leakage theek printing theek');
+      expect(r.pending?.kind, PendingKind.packingReview);
+      expect(r.en, contains('machine 3'));
+      expect(r.en, contains('Masala Chips'));
+      expect(store.entries, isEmpty);
+      final saved = await s.handle('haan');
+      expect(saved.saved, isTrue);
+      expect(store.entries.single.pouch4Weight, 50);
+      expect(store.entries.single.weightStatus, 'green');
+      expect(store.entries.single.machineId, 'm3');
+    });
+
+    test('missing details are asked one by one', () async {
+      var r = await s.handle('chips packing check weight 50 50');
+      expect(r.pending?.kind, PendingKind.packingNeedInfo);
+      expect(r.en, contains('product'));
+      r = await s.handle('masala');
+      expect(r.en, contains('machine'));
+      r = await s.handle('machine 3');
+      expect(r.pending?.kind, PendingKind.packingReview);
+    });
+
+    test('an unknown machine number is asked again', () async {
+      final r = await s.handle('chips machine 9 masala weight 50');
+      expect(r.pending?.kind, PendingKind.packingNeedInfo);
+      expect(r.en, contains('machine'));
+    });
+
+    test('leakage found makes the check red and undo removes it', () async {
+      await s.handle('chips machine 3 masala weight 50 leakage hai printing theek');
+      final saved = await s.handle('haan');
+      expect(saved.statuses['leakage'], 'red');
+      expect(store.entries.single.leakageStatus, 'red');
+      await s.handle('undo');
+      await s.handle('haan');
+      expect(store.entries, isEmpty);
     });
   });
 }
@@ -339,4 +438,5 @@ class _SummaryAi extends OfflineAi {
     this.prompt = prompt;
     return const HybridAnswer('Line 1: All quiet today.\nLine 2: آج سب ٹھیک رہا۔', AnswerSource.onDevice);
   }
+
 }

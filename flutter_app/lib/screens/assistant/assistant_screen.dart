@@ -9,6 +9,7 @@ import '../../assistant/voice_io.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/sections.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/entries_provider.dart';
 import '../../providers/connectivity_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../services/local_storage_service.dart';
@@ -59,6 +60,11 @@ class _AssistantScreenState extends State<AssistantScreen> {
   final _turns = <_Turn>[];
   bool _urdu = true;
   bool _listening = false;
+
+  /// Live conversation: after each spoken reply the microphone opens again,
+  /// like a phone call, until the operator goes quiet or taps stop.
+  bool _live = false;
+  int _silentTurns = 0;
   bool _busy = false;
   String _heard = '';
   String _modelStatus = '…';
@@ -72,6 +78,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
     final conn = context.read<ConnectivityProvider>();
     _service = AssistantService(
       ai: _ai,
+      isOnline: () async => conn.isOnline,
       store: AppAssistantStore(
         local: context.read<LocalStorageService>(),
         firestore: context.read<FirestoreService>(),
@@ -79,6 +86,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
         isOnline: () => conn.isOnline,
         userId: user?.id ?? '',
         userName: user?.username ?? '',
+        entries: context.read<EntriesProvider>(),
       ),
     );
     _turns.add(_Turn.bot(const AssistantReply(
@@ -86,6 +94,16 @@ class _AssistantScreenState extends State<AssistantScreen> {
       ur: 'السلام علیکم! ریڈنگ بولیں جیسے "پیری پیری ہیومیڈیٹی 45"، یا پوچھیں "آج میری کوئی انٹری مس تو نہیں ہوئی؟"',
       source: AnswerSource.rules,
     )));
+    _voice.warmUp().then((_) {
+      if (!mounted || _voice.urduVoice) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        duration: Duration(seconds: 8),
+        content: Text(
+          'This phone has no Urdu voice, so replies are spoken in English. '
+          'To hear Urdu: Settings › Text-to-speech › Google › Install voice data › Urdu.',
+        ),
+      ));
+    });
     _ai.status().then((s) {
       if (mounted) setState(() => _modelStatus = s);
     });
@@ -120,10 +138,23 @@ class _AssistantScreenState extends State<AssistantScreen> {
       _busy = false;
     });
     _scrollDown();
-    await _voice.say(reply.text(_urdu), urdu: _urdu);
     final nav = reply.navigate;
-    if (nav != null && mounted) _navigate(nav);
+    if (nav != null && mounted) {
+      // Leaving the screen ends the conversation; say the reply briefly.
+      _live = false;
+      _voice.say(_spoken(reply), urdu: _speakUrdu);
+      _navigate(nav);
+      return;
+    }
+    await _voice.say(_spoken(reply), urdu: _speakUrdu);
+    if (_live && mounted) _listenOnce();
   }
+
+  /// Urdu is spoken only when the phone has an Urdu voice; otherwise the
+  /// English line is spoken and the Urdu one stays on screen.
+  bool get _speakUrdu => _urdu && _voice.urduVoice;
+
+  String _spoken(AssistantReply r) => r.text(_speakUrdu);
 
   void _navigate(NavTarget nav) {
     final section = nav.sectionId == null ? null : Sections.byId(nav.sectionId!);
@@ -146,37 +177,67 @@ class _AssistantScreenState extends State<AssistantScreen> {
   }
 
   Future<void> _toggleMic() async {
-    if (_listening) {
+    if (_live || _listening) {
+      _live = false;
       await _voice.stopListening();
-      setState(() => _listening = false);
+      await _voice.stopSpeaking();
+      if (mounted) setState(() => _listening = false);
       return;
     }
+    _live = true;
+    _silentTurns = 0;
+    await _listenOnce();
+  }
+
+  Future<void> _listenOnce() async {
+    if (!mounted || _busy) return;
     setState(() {
       _listening = true;
       _heard = '';
     });
+    var sent = false;
     final ok = await _voice.listen(
       urdu: _urdu,
       onWords: (words, done) {
         if (!mounted) return;
         setState(() => _heard = words);
-        if (done) {
+        if (done && !sent) {
+          sent = true;
           setState(() => _listening = false);
-          _send(words);
+          if (words.trim().isEmpty) {
+            _endIfSilent();
+          } else {
+            _silentTurns = 0;
+            _send(words);
+          }
         }
       },
       onError: (e) {
-        if (mounted) setState(() => _listening = false);
+        if (!mounted) return;
+        setState(() => _listening = false);
+        // "no match" / timeout just means the operator said nothing.
+        if (!sent) _endIfSilent();
       },
       onDone: () {
         if (mounted) setState(() => _listening = false);
       },
     );
     if (!ok && mounted) {
+      _live = false;
       setState(() => _listening = false);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('Speech recognition is not available. Type instead.'),
       ));
+    }
+  }
+
+  /// One quiet turn re-opens the mic; two in a row end the conversation.
+  void _endIfSilent() {
+    _silentTurns++;
+    if (_live && _silentTurns < 2) {
+      _listenOnce();
+    } else {
+      _live = false;
     }
   }
 

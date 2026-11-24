@@ -82,6 +82,9 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        // Learn once at launch whether Nano is usable, so the first command
+        // does not pay for the check.
+        scope.launch { modelStatus(startDownload = true) }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "pma/hybrid_ai")
             .setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -98,8 +101,8 @@ class MainActivity : FlutterActivity() {
                         }
                         scope.launch {
                             try {
-                                val model = model(InferenceMode.PREFER_ON_DEVICE, json = true)
-                                val response = withTimeout(25_000L) {
+                                val model = model(preferredMode(), json = true)
+                                val response = withTimeout(12_000L) {
                                     model.generateContent(intentPrompt(text, today))
                                 }
                                 result.success(
@@ -109,7 +112,7 @@ class MainActivity : FlutterActivity() {
                                     ),
                                 )
                             } catch (e: Exception) {
-                                result.error("AI_UNAVAILABLE", e.javaClass.simpleName, null)
+                                result.error("AI_UNAVAILABLE", describe(e), null)
                             }
                         }
                     }
@@ -124,8 +127,8 @@ class MainActivity : FlutterActivity() {
                         scope.launch {
                             try {
                                 val mode = if (cloudOnly) InferenceMode.ONLY_IN_CLOUD
-                                else InferenceMode.PREFER_ON_DEVICE
-                                val response = withTimeout(45_000L) {
+                                else preferredMode()
+                                val response = withTimeout(if (cloudOnly) 45_000L else 20_000L) {
                                     model(mode, json = false).generateContent(prompt)
                                 }
                                 result.success(
@@ -135,7 +138,7 @@ class MainActivity : FlutterActivity() {
                                     ),
                                 )
                             } catch (e: Exception) {
-                                result.error("AI_UNAVAILABLE", e.javaClass.simpleName, null)
+                                result.error("AI_UNAVAILABLE", describe(e), null)
                             }
                         }
                     }
@@ -184,11 +187,30 @@ class MainActivity : FlutterActivity() {
         Operator said: "$text"
     """.trimIndent()
 
+    /**
+     * Nano is only tried when this phone has reported it ready. On phones
+     * without it (e.g. most mid-range devices) PREFER_ON_DEVICE spends time
+     * probing the local model on every call before falling back, so those
+     * phones go straight to the cloud.
+     */
+    @Volatile private var nanoReady = false
+
+    private fun preferredMode(): InferenceMode =
+        if (nanoReady) InferenceMode.PREFER_ON_DEVICE else InferenceMode.ONLY_IN_CLOUD
+
+    private fun describe(e: Exception): String {
+        val msg = "${e.javaClass.simpleName}: ${e.message.orEmpty()}".take(400)
+        android.util.Log.w("PMA-AI", msg, e)
+        return msg
+    }
+
     private fun sourceLabel(source: InferenceSource?): String =
         if (source == InferenceSource.ON_DEVICE) "on-device" else "cloud"
 
     private suspend fun modelStatus(startDownload: Boolean): String = try {
-        when (FirebaseAIOnDevice.checkStatus()) {
+        val status = FirebaseAIOnDevice.checkStatus()
+        nanoReady = status == OnDeviceModelStatus.AVAILABLE
+        when (status) {
             OnDeviceModelStatus.AVAILABLE -> "available"
             OnDeviceModelStatus.DOWNLOADING -> "downloading"
             OnDeviceModelStatus.DOWNLOADABLE -> {

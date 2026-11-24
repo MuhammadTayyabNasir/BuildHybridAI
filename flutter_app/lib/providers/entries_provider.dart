@@ -162,12 +162,18 @@ class EntriesProvider extends ChangeNotifier {
   }
 
   Future<String?> addEntry(PackingEntryModel entry) async {
+    await addEntryReturningId(entry);
+    return null;
+  }
+
+  /// Same as [addEntry] but returns the new entry's id (voice undo needs it).
+  Future<String> addEntryReturningId(PackingEntryModel entry) async {
     final withId = entry.copyWith(id: _uuid.v4(), isSynced: false);
     await _local.saveEntry(withId);
     _cache.putIfAbsent(withId.section, () => []).insert(0, withId);
     notifyListeners();
     _uploadInBackground(withId);
-    return null;
+    return withId.id;
   }
 
   Future<int> addEntries(List<PackingEntryModel> entries) async {
