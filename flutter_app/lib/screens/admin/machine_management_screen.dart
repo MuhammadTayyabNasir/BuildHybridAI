@@ -39,9 +39,9 @@ class _MachineManagementScreenState extends State<MachineManagementScreen>
         bottom: TabBar(
           controller: _tabs,
           isScrollable: true,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white60,
+          indicatorColor: AppColors.primary,
+          labelColor: AppColors.primary,
+          unselectedLabelColor: AppColors.textSecondary,
           tabs: Sections.all.map((s) => Tab(text: s.name)).toList(),
         ),
       ),

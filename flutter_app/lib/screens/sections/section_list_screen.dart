@@ -359,7 +359,7 @@ class _SectionListScreenState extends State<SectionListScreen> {
 
     if (auth.user?.isViewer != true) {
       return Scaffold(
-        appBar: AppBar(
+        appBar: AppBar(foregroundColor: Colors.white, 
           backgroundColor: color,
           title: Text(widget.section.name),
           actions: [
@@ -384,7 +384,7 @@ class _SectionListScreenState extends State<SectionListScreen> {
       );
     } else {
       return Scaffold(
-        appBar: AppBar(
+        appBar: AppBar(foregroundColor: Colors.white, 
           backgroundColor: color,
           title: Text(widget.section.name),
           actions: [

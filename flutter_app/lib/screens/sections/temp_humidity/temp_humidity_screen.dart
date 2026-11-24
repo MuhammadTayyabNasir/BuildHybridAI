@@ -112,7 +112,7 @@ class _TempHumidityScreenState extends State<TempHumidityScreen> {
 
     if (auth.user?.isViewer != true) {
       return Scaffold(
-        appBar: AppBar(
+        appBar: AppBar(foregroundColor: Colors.white, 
           backgroundColor: color,
           title: Text('Temp & Humidity — ${widget.section.name}'),
           actions: [
@@ -124,7 +124,7 @@ class _TempHumidityScreenState extends State<TempHumidityScreen> {
       );
     } else {
       return Scaffold(
-        appBar: AppBar(
+        appBar: AppBar(foregroundColor: Colors.white, 
           backgroundColor: color,
           title: Text('Temp & Humidity — ${widget.section.name}'),
           actions: [

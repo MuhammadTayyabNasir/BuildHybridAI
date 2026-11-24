@@ -14,7 +14,9 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  final ThemeMode _themeMode = ThemeMode.system;
+  // PMA screens use the light palette in lib/ui/pma_ui.dart; dark mode
+  // returns once those screens get dark tokens.
+  final ThemeMode _themeMode = ThemeMode.light;
   @override
   void initState() {
     super.initState();
@@ -62,7 +64,7 @@ class _SplashScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFAC1900), Color(0xFFE65100), Color(0xFFFF833A)],
+            colors: [Color(0xFFFFA24C), Color(0xFFFF6A3D), Color(0xFFE8431F)],
           ),
         ),
         child: const Center(

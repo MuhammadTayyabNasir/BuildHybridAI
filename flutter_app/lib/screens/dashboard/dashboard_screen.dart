@@ -318,12 +318,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: SyncStatusBadge(),
           ),
         IconButton(
-          icon: const Icon(Icons.download, color: Colors.white),
+          icon: const Icon(Icons.download),
           tooltip: 'Download Daily Report',
           onPressed: () => _showReportDialog(context),
         ),
         IconButton(
-          icon: const Icon(Icons.settings, color: Colors.white),
+          icon: const Icon(Icons.settings),
           tooltip: 'Settings',
           onPressed: () => Navigator.push(
             context,
@@ -331,7 +331,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         PopupMenuButton<String>(
-          icon: const Icon(Icons.admin_panel_settings, color: Colors.white),
+          icon: const Icon(Icons.admin_panel_settings),
           onSelected: (val) => _onAdminMenu(context, val),
           itemBuilder: (_) => [
             if (auth.isAdmin)
@@ -352,7 +352,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert, color: Colors.white),
+          icon: const Icon(Icons.more_vert),
           onSelected: (val) {
             if (val == 'logout') context.read<AuthProvider>().logout();
           },

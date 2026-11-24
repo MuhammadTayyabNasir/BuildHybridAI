@@ -313,7 +313,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
         if (discard == true && context.mounted) Navigator.of(context).pop();
       },
       child: Scaffold(
-        appBar: AppBar(
+        appBar: AppBar(foregroundColor: Colors.white, 
           backgroundColor: color,
           title: Text(isEdit ? 'Edit Entry' : 'New Entry — ${widget.section.name}'),
           actions: [

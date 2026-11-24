@@ -23,7 +23,7 @@ class EntryDetailScreen extends StatelessWidget {
     final color = AppColors.sectionColor(section.id);
     final auth = context.read<AuthProvider>();
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppBar(foregroundColor: Colors.white, 
         backgroundColor: color,
         title: Text('Entry Detail — ${section.name}'),
         actions: [

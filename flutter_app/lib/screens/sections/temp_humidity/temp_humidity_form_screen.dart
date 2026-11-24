@@ -201,7 +201,7 @@ class _TempHumidityFormScreenState extends State<TempHumidityFormScreen> {
             if (discard == true && context.mounted) Navigator.of(context).pop();
           },
           child: Scaffold(
-            appBar: AppBar(
+            appBar: AppBar(foregroundColor: Colors.white, 
               backgroundColor: color,
               title: Text('${widget.section.name} — T&H Report'),
               actions: [

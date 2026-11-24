@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  static const primary = Color(0xFFE65100);
-  static const primaryLight = Color(0xFFFF833A);
+  static const primary = Color(0xFFE8431F); // PMA ember
+  static const primaryLight = Color(0xFFFF6A3D); // PMA flame
   static const primaryDark = Color(0xFFAC1900);
 
   static const secondary = Color(0xFFFFC107);
   static const secondaryLight = Color(0xFFFFF350);
   static const secondaryDark = Color(0xFFC79100);
 
-  static const backgroundLight = Color(0xFFF5F5F5);
+  static const backgroundLight = Color(0xFFF6F3F1); // PMA canvas
   static const backgroundDark = Color(0xFF121212);
   static const surfaceLight = Color(0xFFFFFFFF);
   static const surfaceDark = Color(0xFF1E1E1E);

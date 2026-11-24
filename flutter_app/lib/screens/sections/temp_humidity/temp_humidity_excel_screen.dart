@@ -179,7 +179,7 @@ class _TempHumidityExcelScreenState extends State<TempHumidityExcelScreen> {
 
     if (!_ready) {
       return Scaffold(
-        appBar: AppBar(backgroundColor: color, title: Text('${widget.section.name} — T&H Report')),
+        appBar: AppBar(foregroundColor: Colors.white, backgroundColor: color, title: Text('${widget.section.name} — T&H Report')),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
