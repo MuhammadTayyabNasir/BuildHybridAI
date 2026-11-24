@@ -56,9 +56,30 @@ in release).
 - New look: gradient hero with big numbers and trend pills, *Today* view of
   what is still missing this shift, and a floating pill navigation bar.
 
-Planned next: batch dictation, voice packing entries, automations with alerts
-to the manager, photo and PDF extraction of paper forms, restyling the older
-screens, and Chrome web.
+- **Batch dictation**: *"batch shuru karo"*, up to 20 readings, *"bas"*, one
+  read-back, fix by item number.
+- **Automations** (Today → Automations): daily reminders, shift-end
+  missed-reading checks and condition alerts (above / below a value or the red
+  limit). Rules run on the phone every minute, offline too, through a
+  deterministic engine; Gemini can only *suggest* rules, which stay paused until
+  an admin approves them. Manager alerts queue offline and go to Firestore;
+  Cloud Functions in [`functions/`](functions/README.md) push them over FCM and
+  run a server-side shift-end check (needs the Blaze plan).
+- **Paper forms** (Today → Scan paper forms): photo → on-device ML Kit OCR →
+  Gemini Nano structures the rows (cloud vision as fallback); bulk scanned PDF
+  → cloud Gemini page by page with retry and resume. Ditto marks are filled
+  from the row above, and every row is reviewed in an editable grid before it
+  becomes a packing entry.
+- **Chrome web build**: browser storage instead of SQLite, and Chrome's
+  built-in Gemini Nano (Prompt API) on-device with cloud Gemini fallback.
+
+| Platform | On-device model | Fallback |
+|---|---|---|
+| Android | Gemini Nano via Firebase AI Logic (Kotlin bridge) | Cloud Gemini, then rules |
+| Chrome | Built-in Gemini Nano (Prompt API) | Cloud Gemini via Firebase AI Logic, then rules |
+| iOS (planned on a Mac) | — (Apple Foundation Models not bridged yet) | Cloud Gemini, then rules |
+
+Planned next: voice packing entries and restyling the older screens.
 
 ## Run it
 
@@ -66,6 +87,7 @@ screens, and Chrome web.
 cd flutter_app
 flutter pub get
 flutter run        # Android device or emulator (API 26+)
+flutter run -d chrome   # web
 ```
 
 On-device inference needs a phone that supports Gemini Nano through Firebase
@@ -93,7 +115,8 @@ Firebase AI Logic hybrid bridge (on-device Nano / cloud fallback with source
 reporting and a JSON response schema); the Urdu / Roman Urdu / English intent
 pipeline with a deterministic rules fallback; the voice assistant with
 confirm-before-save, corrections, fast mode, undo and audit fields; missed-entry
-schedules; and everything listed under *Planned next* as it lands. `git log`
+schedules; insights dashboards; batch dictation; automations and Cloud
+Functions; paper-form extraction; and the Chrome web build. `git log`
 on this branch shows each step.
 
 ## Project resources
