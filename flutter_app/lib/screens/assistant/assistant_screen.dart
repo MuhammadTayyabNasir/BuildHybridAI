@@ -17,6 +17,7 @@ import '../../ui/pma_ui.dart';
 import '../analytics/advanced_analytics_screen.dart';
 import '../sections/section_home_screen.dart';
 import '../sections/temp_humidity/temp_humidity_screen.dart';
+import '../automations/automations_screen.dart';
 import '../settings/settings_screen.dart';
 
 class _Turn {
@@ -128,6 +129,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
       'temp_humidity' when section != null => TempHumidityScreen(section: section),
       'entries' when section != null => SectionHomeScreen(section: section),
       'settings' => const SettingsScreen(),
+      'automations' => AutomationsScreen.withService(context),
       'analytics' => const AdvancedAnalyticsScreen(),
       _ => null,
     };

@@ -12,6 +12,8 @@ import '../../providers/entries_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../services/local_storage_service.dart';
 import '../../services/th_threshold_service.dart';
+import '../../automations/automation_service.dart';
+import '../automations/automations_screen.dart';
 import '../../ui/pma_ui.dart';
 import '../sections/section_home_screen.dart';
 import '../sections/temp_humidity/temp_humidity_screen.dart';
@@ -217,6 +219,37 @@ class _TodayScreenState extends State<TodayScreen> {
                   },
                 ),
               ),
+            const _SectionTitle('Automations'),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Builder(builder: (context) {
+                final auto = context.watch<AutomationService>();
+                final last = auto.inbox.isEmpty ? null : auto.inbox.first;
+                final active = auto.rules.where((r) => r.enabled).length;
+                return PmaCard(
+                  onTap: () => AutomationsScreen.open(context),
+                  child: Row(children: [
+                    CircleAvatar(
+                      backgroundColor: Pma.flame.withValues(alpha: 0.12),
+                      child: const Icon(Icons.bolt_rounded, color: Pma.ember),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('$active active rules'
+                            '${auto.suggestions.isEmpty ? '' : ' · ${auto.suggestions.length} AI suggestions'}',
+                            style: const TextStyle(fontWeight: FontWeight.w700)),
+                        Text(last?.en ?? 'Shift-end checks and red alerts run automatically.',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 12, color: Pma.inkSoft)),
+                      ]),
+                    ),
+                    const Icon(Icons.chevron_right),
+                  ]),
+                );
+              }),
+            ),
             const _SectionTitle('Sections'),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),

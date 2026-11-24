@@ -264,6 +264,9 @@ class RulesParser {
   }
 
   static String _screen(String t) {
+    if (_has(t, const ['automation', 'alert', 'reminder', 'yaad dahani', 'آٹومیشن', 'الرٹ'])) {
+      return 'automations';
+    }
     if (_has(t, const ['setting', 'سیٹنگ'])) return 'settings';
     if (_has(t, const ['analytic', 'report', 'graph', 'chart', 'رپورٹ'])) {
       return 'analytics';

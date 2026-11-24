@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'core/constants/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'screens/auth/login_screen.dart';
+import 'automations/automation_host.dart';
 import 'screens/home/home_shell.dart';
 import 'widgets/shift_monitor.dart';
 class App extends StatefulWidget {
@@ -42,7 +43,7 @@ class _AppState extends State<App> {
       case AuthState.loading:
         return const _SplashScreen();
       case AuthState.authenticated:
-        return const ShiftMonitor(child: HomeShell());
+        return const ShiftMonitor(child: AutomationHost(child: HomeShell()));
       case AuthState.unauthenticated:
       case AuthState.error:
         return const LoginScreen();

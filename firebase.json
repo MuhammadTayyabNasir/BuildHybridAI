@@ -1,1 +1,12 @@
-{}
+{
+  "firestore": {
+    "rules": "flutter_app/firestore.rules"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": ["node_modules", ".git", "*.local", "test"]
+    }
+  ]
+}

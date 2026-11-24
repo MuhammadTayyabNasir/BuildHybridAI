@@ -59,6 +59,7 @@ dependencies:
   syncfusion_flutter_core: ^29.2.11
   syncfusion_officechart: ^29.2.11
   cloud_firestore: ^7.1.0
+  firebase_messaging: ^17.0.1
 
 dev_dependencies:
   flutter_test:

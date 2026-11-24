@@ -841,6 +841,7 @@ class AssistantService {
     final label = switch (screen) {
       'temp_humidity' => ('temperature & humidity sheet', 'ٹمپریچر اور ہیومیڈیٹی شیٹ'),
       'settings' => ('settings', 'سیٹنگز'),
+      'automations' => ('automations', 'آٹومیشنز'),
       'analytics' => ('analytics', 'اینالیٹکس'),
       'dashboard' => ('dashboard', 'ڈیش بورڈ'),
       _ => ('packing sheet', 'پیکنگ شیٹ'),

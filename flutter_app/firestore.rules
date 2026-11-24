@@ -19,6 +19,15 @@ service cloud.firestore {
     match /packing_entries/{id} { allow read, write: if signedIn(); }
     match /temp_humidity/{id}   { allow read, write: if signedIn(); }
     match /devices/{id}         { allow read, write: if signedIn(); }
+    match /th_thresholds/{id}   { allow read, write: if signedIn(); }
+    match /global_settings/{id} { allow read, write: if signedIn(); }
+
+    // Automation alerts: phones raise them, the pushAlert Cloud Function
+    // sends them to managers over FCM. Alerts are never deleted from a phone.
+    match /alerts/{id} {
+      allow read, create, update: if signedIn();
+      allow delete: if false;
+    }
 
     // Deny anything else by default.
     match /{document=**} {
