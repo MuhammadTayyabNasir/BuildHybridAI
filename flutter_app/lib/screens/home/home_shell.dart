@@ -43,6 +43,7 @@ class _HomeShellState extends State<HomeShell> {
       return Scaffold(
         backgroundColor: Pma.canvas,
         body: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             PillNavRail(items: _items, index: _index, onTap: go),
             Expanded(

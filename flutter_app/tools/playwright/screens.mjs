@@ -71,7 +71,8 @@ for (const size of sizes) {
   page.on('console', (m) => {
     if (m.type() === 'error') log.push(`[${size.name}] console error: ${m.text().slice(0, 300)}`);
   });
-  page.on('pageerror', (e) => log.push(`[${size.name}] page error: ${String(e).slice(0, 300)}`));
+  page.on('pageerror', (e) =>
+    log.push(`[${size.name}] page error: ${String(e.stack || e).slice(0, 600)}`));
 
   await page.goto(base, { waitUntil: 'networkidle', timeout: 120000 });
   await enableSemantics(page);
@@ -109,9 +110,10 @@ for (const size of sizes) {
       await page.keyboard.type('peri peri humidity 45');
       await page.keyboard.press('Enter');
       await shot(page, size, '06-assistant-readback');
-      await page.locator('flt-semantics input, flt-semantics textarea').last().focus();
-      await page.keyboard.type('haan');
-      await page.keyboard.press('Enter');
+      // Confirm with the on-screen button (Urdu or English label).
+      if (!(await tapText(page, 'محفوظ')) && !(await tapText(page, 'Yes'))) {
+        log.push(`[${size.name}] confirm button not found`);
+      }
       await shot(page, size, '07-assistant-saved');
       await page.locator('flt-semantics input, flt-semantics textarea').last().focus();
       await page.keyboard.type('aaj meri koi entry miss to nahi hui');

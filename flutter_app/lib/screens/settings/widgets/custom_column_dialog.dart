@@ -69,7 +69,7 @@ class _CustomColumnDialogState extends State<CustomColumnDialog> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<CustomColumnType>(
-              value: _type,
+              initialValue: _type,
               decoration: const InputDecoration(labelText: 'Data Type'),
               items: CustomColumnType.values.map((t) {
                 final label = t.name[0].toUpperCase() + t.name.substring(1);
@@ -97,7 +97,7 @@ class _CustomColumnDialogState extends State<CustomColumnDialog> {
               subtitle: const Text('Operators cannot save without filling this out.'),
               value: _isRequired,
               contentPadding: EdgeInsets.zero,
-              activeColor: Theme.of(context).colorScheme.primary,
+              activeThumbColor: Theme.of(context).colorScheme.primary,
               onChanged: (val) => setState(() => _isRequired = val),
             ),
           ],

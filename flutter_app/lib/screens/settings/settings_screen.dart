@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
@@ -1210,6 +1211,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _changeDownloadFolder() async {
     String? picked;
+    if (kIsWeb) return; // the browser always saves to its downloads folder
     if (Platform.isAndroid || Platform.isIOS) {
       picked = await FilePicker.platform.getDirectoryPath(
         dialogTitle: 'Choose download folder',
@@ -1234,6 +1236,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<String> _defaultFolderLabel() async {
+    // dart:io Platform throws in the browser.
+    if (kIsWeb) return 'Browser downloads folder';
     if (Platform.isWindows) {
       final home = Platform.environment['USERPROFILE'] ?? 'C:\\Users\\Public';
       return '$home\\Downloads';

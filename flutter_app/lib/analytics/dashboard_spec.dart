@@ -177,10 +177,10 @@ Facts: ${jsonEncode(facts)}
     ];
     final spokenEn = 'In the last $days days the team recorded $totalReadings readings, '
         'with $red above the red limit. '
-        '${hot.isEmpty ? 'No section went red.' : 'Watch ${hot.join(' and ')}.'} '
+        '${hot.isEmpty ? 'No section went red.' : hot.length >= 5 ? 'Every section had at least one red reading.' : 'Watch ${_list(hot)}.'} '
         '${pass > 0 ? 'This week ${pass.toStringAsFixed(0)} percent of packing checks passed.' : ''}';
     final spokenUr = 'پچھلے $days دنوں میں $totalReadings ریڈنگز ہوئیں، جن میں سے $red سرخ حد سے اوپر تھیں۔ '
-        '${hot.isEmpty ? 'کوئی سیکشن سرخ نہیں ہوا۔' : '${hot.join(' اور ')} پر نظر رکھیں۔'}';
+        '${hot.isEmpty ? 'کوئی سیکشن سرخ نہیں ہوا۔' : hot.length >= 5 ? 'ہر سیکشن میں کم از کم ایک سرخ ریڈنگ آئی۔' : '${hot.join('، ')} پر نظر رکھیں۔'}';
     return DashboardSpec(
       title: 'Last $days days',
       summary: spokenEn,
@@ -219,3 +219,8 @@ Facts: ${jsonEncode(facts)}
     );
   }
 }
+
+/// "A", "A and B", "A, B and C".
+String _list(List<String> items) => items.length <= 2
+    ? items.join(' and ')
+    : '${items.sublist(0, items.length - 1).join(', ')} and ${items.last}';
