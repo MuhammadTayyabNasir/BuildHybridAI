@@ -327,6 +327,109 @@ class PillNavBar extends StatelessWidget {
   }
 }
 
+/// Width at which PMA switches from the phone layout (bottom pill bar) to
+/// the desktop layout (side rail).
+const pmaWideBreakpoint = 900.0;
+
+/// Desktop navigation: the same pill look, standing up on the left, with the
+/// PMA mark on top.
+class PillNavRail extends StatelessWidget {
+  const PillNavRail({
+    super.key,
+    required this.items,
+    required this.index,
+    required this.onTap,
+  });
+  final List<PillNavItem> items;
+  final int index;
+  final ValueChanged<int> onTap;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 0, 16),
+        child: Container(
+          width: 96,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(40),
+            boxShadow: const [
+              BoxShadow(color: Color(0x18000000), blurRadius: 28, offset: Offset(0, 12)),
+            ],
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 18),
+              Image.asset('assets/images/pma_mark.png', width: 56,
+                  semanticLabel: 'PMA'),
+              const SizedBox(height: 4),
+              const Text('PMA',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Pma.ink, letterSpacing: 1)),
+              const SizedBox(height: 24),
+              for (var i = 0; i < items.length; i++)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Semantics(
+                    button: true,
+                    selected: i == index,
+                    label: items[i].label,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(24),
+                      onTap: () => onTap(i),
+                      child: SizedBox(
+                        width: 80,
+                        child: Column(
+                          children: [
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 220),
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: i == index ? Pma.ink : Colors.transparent,
+                              ),
+                              child: Icon(items[i].icon,
+                                  color: i == index ? Colors.white : Pma.inkSoft),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              items[i].label,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: i == index ? FontWeight.w800 : FontWeight.w500,
+                                color: i == index ? Pma.ink : Pma.inkSoft,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+}
+
+/// Keeps pages readable on big screens: content is centered and capped at
+/// [maxWidth]; on phones it is a no-op.
+class PmaFrame extends StatelessWidget {
+  const PmaFrame({super.key, required this.child, this.maxWidth = 1180});
+  final Widget child;
+  final double maxWidth;
+
+  @override
+  Widget build(BuildContext context) => ColoredBox(
+        color: Pma.canvas,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: child,
+          ),
+        ),
+      );
+}
+
 /// Smooth area chart with a dark tooltip bubble.
 class AreaTrendChart extends StatelessWidget {
   const AreaTrendChart({

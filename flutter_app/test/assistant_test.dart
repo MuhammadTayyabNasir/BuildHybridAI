@@ -417,6 +417,17 @@ void main() {
       expect(r.en, contains('machine'));
     });
 
+    test('last entry and catalogue questions are answered on the phone', () async {
+      await s.handle('chips machine 3 masala weight 50 leakage theek printing theek');
+      await s.handle('haan');
+      final last = await s.handle('aakhri entry kya thi');
+      expect(last.en, contains('machine 3'));
+      final products = await s.handle('chips ki kaun si products hain');
+      expect(products.en, contains('Masala Chips'));
+      final machines = await s.handle('kitni machines hain');
+      expect(machines.en, startsWith('1 machines'));
+    });
+
     test('leakage found makes the check red and undo removes it', () async {
       await s.handle('chips machine 3 masala weight 50 leakage hai printing theek');
       final saved = await s.handle('haan');

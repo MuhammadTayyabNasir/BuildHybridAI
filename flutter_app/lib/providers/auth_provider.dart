@@ -35,6 +35,30 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _state == AuthState.authenticated;
   bool get isOfflineMode => _isOfflineMode;
 
+  bool _isDemo = false;
+
+  /// Local demo session (no Firebase sign-in, synthetic data).
+  bool get isDemo => _isDemo;
+
+  /// Opens the app as a local demo admin. [seed] fills the phone with
+  /// made-up data first; it runs before the home screen appears.
+  Future<void> startDemo(UserModel demoUser, Future<void> Function() seed) async {
+    _state = AuthState.loading;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await seed();
+      _user = demoUser;
+      _isDemo = true;
+      _isOfflineMode = true;
+      _state = AuthState.authenticated;
+    } catch (e) {
+      _errorMessage = 'Could not open the demo: $e';
+      _state = AuthState.unauthenticated;
+    }
+    notifyListeners();
+  }
+
   Future<void> checkAuth() async {
     _state = AuthState.loading;
     notifyListeners();
@@ -162,6 +186,7 @@ class AuthProvider extends ChangeNotifier {
     _user = null;
     _state = AuthState.unauthenticated;
     _isOfflineMode = false;
+    _isDemo = false;
     notifyListeners();
   }
 

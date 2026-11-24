@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../services/demo_data.dart';
+import '../../services/firestore_service.dart';
+import '../../services/local_storage_service.dart';
+import '../../providers/entries_provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../ui/pma_ui.dart';
@@ -64,40 +68,32 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Future<void> _demo() async {
+    final demo = DemoData(
+      context.read<LocalStorageService>(),
+      context.read<FirestoreService>(),
+      context.read<EntriesProvider>(),
+    );
+    await context.read<AuthProvider>().startDemo(DemoData.user, demo.ensureSeeded);
+  }
+
   Widget _buildLogo() {
     return Column(
       children: [
+        // The PMA logo already carries the name and tagline.
         Container(
-          width: 90,
-          height: 90,
+          width: 200,
+          height: 200,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20)],
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 24)],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: Image.asset('assets/icon/icon.png', fit: BoxFit.cover),
+            borderRadius: BorderRadius.circular(32),
+            child: Image.asset('assets/images/pma_logo.png', fit: BoxFit.cover,
+                semanticLabel: 'PMA, Package Monitoring App, Hybrid AI and Voice'),
           ),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'PMA',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 36,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 2,
-          ),
-        ),
-        const Text(
-          'Packing Monitor',
-          style: TextStyle(color: Colors.white70, fontSize: 15, letterSpacing: 1),
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'Packing & Monitoring App',
-          style: TextStyle(color: Colors.white70, fontSize: 12),
         ),
         const SizedBox(height: 16),
         const Text(
@@ -205,6 +201,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                         )
                       : const Text('Sign In', style: TextStyle(fontSize: 16)),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: auth.state == AuthState.loading ? null : _demo,
+                  icon: const Icon(Icons.play_circle_outline),
+                  label: const Text('Try the demo (no login)'),
                 ),
               ),
               const SizedBox(height: 16),

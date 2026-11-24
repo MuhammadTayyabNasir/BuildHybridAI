@@ -33,14 +33,28 @@ class _HomeShellState extends State<HomeShell> {
       const InsightsScreen(),
       const DashboardScreen(),
     ];
+    void go(int i) => setState(() => _index = i);
+    final wide = MediaQuery.sizeOf(context).width >= pmaWideBreakpoint;
+    if (wide) {
+      return Scaffold(
+        backgroundColor: Pma.canvas,
+        body: Row(
+          children: [
+            PillNavRail(items: _items, index: _index, onTap: go),
+            Expanded(
+              child: PmaFrame(
+                maxWidth: 1180,
+                child: IndexedStack(index: _index, children: pages),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: Pma.canvas,
       body: IndexedStack(index: _index, children: pages),
-      bottomNavigationBar: PillNavBar(
-        items: _items,
-        index: _index,
-        onTap: (i) => setState(() => _index = i),
-      ),
+      bottomNavigationBar: PillNavBar(items: _items, index: _index, onTap: go),
     );
   }
 }

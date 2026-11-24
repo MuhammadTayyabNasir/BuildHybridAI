@@ -177,6 +177,10 @@ class FirestoreService {
       ProductModel(id: '', name: name, section: 'chocolate', price: price,
           weightGrams: wg, moistureMax: 0, expiryDays: exp, imagePath: img);
 
+  /// Default catalogue, also used to seed demo mode.
+  List<ProductModel> defaultProducts() => _defaultProducts();
+  List<MachineModel> defaultMachines() => _defaultMachines();
+
   List<ProductModel> _defaultProducts() => [
     // Peri Peri
     _pp("Peri Peri Flamin' Hot",   20, 18,  30),

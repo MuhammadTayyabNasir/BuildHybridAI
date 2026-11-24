@@ -1,0 +1,7 @@
+{
+  "name": "pma-ui-check",
+  "private": true,
+  "type": "module",
+  "scripts": { "screens": "node screens.mjs" },
+  "devDependencies": { "playwright": "^1.65.0" }
+}

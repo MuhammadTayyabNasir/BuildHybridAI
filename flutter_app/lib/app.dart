@@ -67,19 +67,19 @@ class _SplashScreen extends StatelessWidget {
             colors: [Color(0xFFFFA24C), Color(0xFFFF6A3D), Color(0xFFE8431F)],
           ),
         ),
-        child: const Center(
+        child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(color: Colors.white),
-              SizedBox(height: 24),
-              Text(
-                'PMA — Packing & Monitoring',
-                style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: Image.asset('assets/images/pma_logo_anim.gif', width: 280),
               ),
-              Text(
-                'Packing & Monitoring App',
-                style: TextStyle(color: Colors.white70, fontSize: 14),
+              const SizedBox(height: 28),
+              const SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
               ),
             ],
           ),

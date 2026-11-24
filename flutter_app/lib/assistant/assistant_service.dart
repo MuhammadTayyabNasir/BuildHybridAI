@@ -257,6 +257,9 @@ class AssistantService {
       );
     }
     if (rules.isUndo(trimmed)) return _askUndo();
+    final norm = RulesParser.normalize(trimmed);
+    if (_lastEntryWords.any(norm.contains)) return _lastEntry();
+    if (_listWords.any(norm.contains)) return _listCatalogue(norm);
     if (packingVoice.looksLikePacking(trimmed)) return _startPacking(trimmed);
 
     final intent = await understand(trimmed);
@@ -951,6 +954,64 @@ class AssistantService {
       p == 'yesterday' ? 'Yesterday' : p == 'week' ? 'In the last 7 days' : 'Today';
   static String _periodUr(String p) =>
       p == 'yesterday' ? 'کل' : p == 'week' ? 'پچھلے 7 دنوں میں' : 'آج';
+
+  static const _lastEntryWords = [
+    'last entry', 'aakhri entry', 'akhri entry', 'pichli entry', 'latest entry',
+    'آخری انٹری', 'پچھلی انٹری',
+  ];
+  static const _listWords = [
+    'kaun si products', 'konsi products', 'kon si products', 'which products',
+    'list products', 'products batao', 'kitni machines', 'which machines',
+    'machines batao', 'kaun si machines', 'پروڈکٹس', 'مشینیں',
+  ];
+
+  /// "Aakhri entry kya thi?": the newest packing check and reading.
+  AssistantReply _lastEntry() {
+    final entries = [...store.packingEntries()]
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    if (entries.isEmpty) {
+      return const AssistantReply(
+        en: 'There are no packing entries yet.',
+        ur: 'ابھی کوئی پیکنگ انٹری نہیں ہے۔',
+        source: AnswerSource.rules,
+      );
+    }
+    final e = entries.first;
+    final when = '${e.createdAt.day}/${e.createdAt.month} ${e.createdAt.hour.toString().padLeft(2, '0')}:${e.createdAt.minute.toString().padLeft(2, '0')}';
+    return AssistantReply(
+      en: 'Last entry: ${_nameEn(e.section)}, machine ${e.machineNumber}, ${e.productName}, by ${e.operatorName} at $when. Weight ${e.weightStatus}, leakage ${e.leakageStatus}.',
+      ur: 'آخری انٹری: ${_nameUr(e.section)}، مشین ${e.machineNumber}، ${e.productName}، ${e.operatorName} نے $when پر کی۔',
+      source: AnswerSource.rules,
+      statuses: {'weight': e.weightStatus, 'leakage': e.leakageStatus},
+    );
+  }
+
+  /// "Chips ki kaun si products hain?" / "kitni machines hain?"
+  AssistantReply _listCatalogue(String norm) {
+    final section = AssistantIntent.normalizeSection(norm);
+    if (norm.contains('machine') || norm.contains('مشین')) {
+      final ms = store.machines().where((m) => m.isActive && (section == null || m.section == section)).toList();
+      final by = <String, int>{};
+      for (final m in ms) {
+        by[m.section] = (by[m.section] ?? 0) + 1;
+      }
+      final en = by.entries.map((e) => '${_nameEn(e.key)} ${e.value}').join(', ');
+      final ur = by.entries.map((e) => '${_nameUr(e.key)} ${e.value}').join('، ');
+      return AssistantReply(
+        en: '${ms.length} machines: $en.',
+        ur: '${ms.length} مشینیں: $ur۔',
+        source: AnswerSource.rules,
+      );
+    }
+    final ps = store.products().where((p) => p.isActive && (section == null || p.section == section)).toList();
+    final names = ps.take(8).map((p) => p.name).join(', ');
+    final more = ps.length > 8 ? ' and ${ps.length - 8} more' : '';
+    return AssistantReply(
+      en: '${ps.length} products${section == null ? '' : ' in ${_nameEn(section)}'}: $names$more.',
+      ur: '${section == null ? '' : '${_nameUr(section)} میں '}${ps.length} پروڈکٹس: $names۔',
+      source: AnswerSource.rules,
+    );
+  }
 
   // ---------------------------------------------------------------- packing
 

@@ -79,7 +79,37 @@ in release).
 | Chrome | Built-in Gemini Nano (Prompt API) | Cloud Gemini via Firebase AI Logic, then rules |
 | iOS (planned on a Mac) | — (Apple Foundation Models not bridged yet) | Cloud Gemini, then rules |
 
-Planned next: voice packing entries and restyling the older screens.
+- **Gemini Live** (Assistant → *Live*, online): talk freely in Urdu or English
+  and get a natural spoken reply you can interrupt. Gemini Live (Firebase AI
+  Logic `liveGenerativeModel`) only handles the conversation; every request
+  goes to the app through one function call (`pma`), so the same validation,
+  read-back and *"haan before saving"* rule apply and the model can only say
+  "saved" when the app saved.
+- **Voice packing checks**: *"chips machine 3 masala weight 50 51 49 50
+  leakage theek printing theek"*; missing details are asked one at a time and
+  the check is read back with green/yellow/red before saving.
+- **Dabba**, the box-robot mascot, shows what the assistant is doing
+  (listening, thinking, speaking, happy after a save, worried at a red value).
+- **Desktop layout**: side rail and centered pages on wide screens.
+- **Try the demo**: a local demo admin with three weeks of made-up data, no
+  account needed (for judges and UI tests).
+
+## 3-minute demo script
+
+| Time | Show |
+|---|---|
+| 0:00–0:20 | The problem: paper packing sheets, no internet on the floor. Splash → login → **Try the demo**. |
+| 0:20–0:55 | Phone in airplane mode: Assistant, say *"Peri Peri ki humidity 45 dal do"* → Dabba reads it back → *"haan"* → saved (badge **Rules/On-device**). *"aaj meri koi entry miss to nahi hui?"* → lists the missing evening reading. |
+| 0:55–1:25 | Voice packing check with a red weight → Dabba looks worried → *"nahi, weight 50"* → read back again → save. |
+| 1:25–2:05 | Back online: **Live** → talk in Urdu, interrupt it mid-sentence, ask *"aaj ki report kya hai"*. Point at the badge switching to **Cloud**. |
+| 2:05–2:35 | Insights: **Build AI dashboard** → cloud Gemini picks KPIs and charts, explains them aloud. |
+| 2:35–3:00 | Scan a paper form → review grid → save; Automations suggestion approved; desktop web view with the side rail. |
+
+## UI check
+
+`tools/playwright/screens.mjs` opens the web build in Chrome, uses the demo,
+and saves screenshots of every screen at phone (390×844) and desktop
+(1440×900) size into `flutter_app/build/screens/`.
 
 ## Run it
 

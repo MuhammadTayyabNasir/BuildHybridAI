@@ -6,7 +6,7 @@
     "background_color": "#FF6A3D",
     "theme_color": "#FF6A3D",
     "description": "Voice-first factory floor logging with hybrid on-device + cloud AI.",
-    "orientation": "portrait-primary",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {
