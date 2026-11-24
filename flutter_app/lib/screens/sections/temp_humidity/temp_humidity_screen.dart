@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../ui/dabba_mascot.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -288,7 +289,7 @@ class _TempHumidityScreenState extends State<TempHumidityScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.filter_alt_off_outlined, size: 48, color: color.withValues(alpha: 0.4)),
+          const Dabba(mood: DabbaMood.thinking, size: 80),
           const SizedBox(height: 10),
           const Text('No reports match the filter', style: TextStyle(color: AppColors.textSecondary)),
           TextButton(onPressed: () => setState(() { _thFrom = null; _thTo = null; _thShift = null; }), child: const Text('Clear filters')),
@@ -302,7 +303,7 @@ class _TempHumidityScreenState extends State<TempHumidityScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.thermostat, size: 72, color: color.withValues(alpha: 0.3)),
+          const Dabba(mood: DabbaMood.idle, size: 96),
           const SizedBox(height: 16),
           const Text('No reports yet', style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
           const SizedBox(height: 8),

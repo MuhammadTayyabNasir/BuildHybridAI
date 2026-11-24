@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../ui/dabba_mascot.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -269,7 +270,7 @@ class _AdvancedAnalyticsScreenState extends State<AdvancedAnalyticsScreen>
   Widget _buildEmpty() {
     return Center(
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.analytics_outlined, size: 64, color: AppColors.textHint),
+        const Dabba(mood: DabbaMood.thinking, size: 96),
         const SizedBox(height: 16),
         const Text('No entries for selected filters', style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
         const SizedBox(height: 8),

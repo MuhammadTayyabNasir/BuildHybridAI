@@ -9,6 +9,7 @@ import '../../assistant/voice_io.dart';
 import '../../providers/connectivity_provider.dart';
 import '../../services/local_storage_service.dart';
 import '../../services/th_threshold_service.dart';
+import '../../ui/dabba_mascot.dart';
 import '../../ui/pma_ui.dart';
 import '../assistant/assistant_screen.dart' show SourceBadge;
 import '../../assistant/hybrid_ai_factory.dart';
@@ -219,7 +220,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
               child: PmaCard(
                 child: Column(
                   children: [
-                    const Icon(Icons.insights, size: 40, color: Pma.flame),
+                    const Dabba(mood: DabbaMood.thinking, size: 84),
                     const SizedBox(height: 8),
                     const Text('No dashboard yet', style: TextStyle(fontWeight: FontWeight.w700)),
                     const SizedBox(height: 4),

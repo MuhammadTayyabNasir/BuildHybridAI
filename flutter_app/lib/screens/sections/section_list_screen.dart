@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../ui/dabba_mascot.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -558,7 +559,7 @@ class _SectionListScreenState extends State<SectionListScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.inbox_outlined, size: 64, color: AppColors.textHint),
+          const Dabba(mood: DabbaMood.idle, size: 96),
           const SizedBox(height: 12),
           const Text('No entries found', style: TextStyle(color: AppColors.textSecondary)),
           const SizedBox(height: 4),

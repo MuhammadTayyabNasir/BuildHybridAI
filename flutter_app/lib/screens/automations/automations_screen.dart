@@ -11,6 +11,7 @@ import '../../core/constants/sections.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/local_storage_service.dart';
 import '../../services/th_threshold_service.dart';
+import '../../ui/dabba_mascot.dart';
 import '../../ui/pma_ui.dart';
 import '../../assistant/hybrid_ai_factory.dart';
 
@@ -154,8 +155,12 @@ class _AutomationsScreenState extends State<AutomationsScreen> {
           const _Title('Rules'),
           if (rules.isEmpty)
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Text('No rules yet.'),
+              padding: EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: DabbaSays(
+                mood: DabbaMood.thinking,
+                message: 'No rules yet. Tap "Suggest" and I will propose some from '
+                    'your readings, or add one with "New rule".',
+              ),
             ),
           for (final r in rules)
             Padding(
@@ -216,8 +221,11 @@ class _AutomationsScreenState extends State<AutomationsScreen> {
                   : TextButton(onPressed: svc.clearInbox, child: const Text('Clear'))),
           if (svc.inbox.isEmpty)
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Text('Nothing has fired yet.'),
+              padding: EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: DabbaSays(
+                mood: DabbaMood.sleeping,
+                message: 'All quiet. Alerts will appear here when a rule fires.',
+              ),
             ),
           for (final e in svc.inbox)
             Padding(

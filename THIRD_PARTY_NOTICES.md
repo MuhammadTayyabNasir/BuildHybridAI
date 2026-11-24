@@ -15,3 +15,19 @@ ECC is copyright 2026 Affaan Mustafa and distributed under the MIT License, incl
 ## Official documentation
 
 The guide index links to Devpost, Firebase, Google and Chrome documentation. Offline text copies are retained locally for research and excluded from Git.
+
+## Syncfusion
+
+Excel export with charts and PDF page splitting use Syncfusion Flutter
+packages (`syncfusion_flutter_xlsio`, `syncfusion_officechart`,
+`syncfusion_flutter_pdf`, `syncfusion_flutter_core`). They are **not open
+source**; they are used under the Syncfusion Community License. Everything else
+in PMA is open source.
+
+## Pre-existing work
+
+The packing-monitor app in `flutter_app/` was written by the author before the
+hackathon (baseline commit `133150f`) and was never used commercially. All AI,
+voice, insights, automations, paper-form, web, mascot and redesign work was
+built during the submission period; see the README's "Pre-existing work"
+section.
